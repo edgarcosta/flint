@@ -188,6 +188,13 @@ The *acb_print...* functions print to standard output, while
     Any flags understood by :func:`arb_get_str` can be passed via *flags*
     to control the format of the real and imaginary parts.
 
+.. function:: void _acb_vec_printd(acb_srcptr vec, slong len, slong digits)
+
+.. function:: void _acb_vec_printn(acb_srcptr vec, slong len, slong digits, ulong flags)
+
+    Prints *vec* in decimal, using :func:`acb_printd` or :func:`acb_printn` on
+    each entry.
+
 Random number generation
 -------------------------------------------------------------------------------
 
@@ -209,6 +216,11 @@ Random number generation
 
     Generates a random complex number, with very high probability of
     generating integers and half-integers.
+
+.. function:: void acb_urandom(acb_t z, flint_rand_t state, slong prec)
+
+    Generates a random complex number with precise real and imaginary parts,
+    uniformly chosen in the unit disk.
 
 Precision and comparisons
 -------------------------------------------------------------------------------
@@ -449,6 +461,10 @@ Arithmetic
 .. function:: void acb_div_onei(acb_t z, const acb_t x)
 
     Sets *z* to *x* divided by the imaginary unit.
+
+.. function:: void acb_mul_powi(acb_t z, const acb_t x, slong k)
+
+    Sets *z* to *x* multiplied by *i^k*, where *i* denotes the imaginary unit.
 
 .. function:: void acb_mul_ui(acb_t z, const acb_t x, ulong y, slong prec)
 
@@ -1170,6 +1186,14 @@ Vector functions
 
     Sets *res* to a copy of *vec*, rounding each entry to *prec* bits.
 
+.. function:: void _acb_vec_overlaps(acb_srcptr vec1, acb_srcptr vec2, slong len)
+
+    Returns true iff *vec1* overlaps *vec2* entrywise.
+
+.. function:: void _acb_vec_contains(acb_srcptr vec1, acb_srcptr vec2, slong len)
+
+    Returns true iff *vec1* contains *vec2* entrywise.
+
 .. function:: void _acb_vec_swap(acb_ptr vec1, acb_ptr vec2, slong len)
 
     Swaps the entries of *vec1* and *vec2*.
@@ -1204,7 +1228,11 @@ Vector functions
 
 .. function:: void _acb_vec_scalar_div_fmpz(acb_ptr res, acb_srcptr vec, slong len, const fmpz_t c, slong prec)
 
-   Performs the respective scalar operation elementwise.
+    Performs the respective scalar operation elementwise.
+
+.. function:: _acb_vec_sqr(acb_ptr res, acb_srcptr vec, slong len, slong prec)
+
+    Sets *res* to the square of *vec* elementwise.
 
 .. function:: slong _acb_vec_bits(acb_srcptr vec, slong len)
 

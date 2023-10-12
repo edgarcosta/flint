@@ -100,6 +100,17 @@ Random generation
     Sets *mat* to a random matrix with up to *prec* bits of precision
     and with exponents of width up to *mag_bits*.
 
+.. function:: void arb_mat_randtest_cho(arb_mat_t mat, flint_rand_t state, slong prec, slong mag_bits)
+
+    Sets *mat* to a random lower-triangular matrix with precise entries
+    and positive diagonal entries. Requires that *mat* is square.
+
+.. function:: void arb_mat_randtest_spd(arb_mat_t mat, flint_rand_t state, slong prec, slong mag_bits)
+
+    Sets *mat* to a random symmetric positive definite matrix, obtained as a
+    product `L * L^T` where `L` is a random Cholesky matrix. Requires that
+    *mat* is square.
+
 Input and output
 -------------------------------------------------------------------------------
 
@@ -178,6 +189,14 @@ Predicate methods return 1 if the property certainly holds and 0 otherwise.
 
     Returns whether *mat* is a diagonal matrix; that is, all entries
     off the main diagonal are exactly zero.
+
+.. function:: int arb_mat_is_symmetric(const arb_mat_t mat)
+
+    Returns whether *mat* is certainly symmetric (in particular square).
+
+.. function:: int arb_mat_is_nonsymmetric(const arb_mat_t mat)
+
+    Returns whether *mat* is certainly not a symmetric matrix.
 
 Special matrices
 -------------------------------------------------------------------------------
@@ -757,3 +776,11 @@ Eigenvalues and eigenvectors
 To compute eigenvalues and eigenvectors, one can convert to an
 :type:`acb_mat_t` and use the functions in :ref:`acb_mat.h: Eigenvalues and eigenvectors<acb-mat-eigenvalues>`.
 In the future dedicated methods for real matrices will be added here.
+
+LLL reduction
+-------------------------------------------------------------------------------
+
+.. function:: arb_mat_spd_lll_reduce(fmpz_mat_t U, const arb_mat_t A, slong prec)
+
+    Given a symmetric positive definite matrix *A*, compute a unimodular
+    transformation *U* such that *U^T A U* is close to being LLL-reduced.

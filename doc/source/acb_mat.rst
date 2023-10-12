@@ -96,6 +96,18 @@ Conversions
 
     Sets *dest* to *src*. The operands must have identical dimensions.
 
+.. function:: void acb_mat_get_real(arb_mat_t re, const arb_mat_t mat)
+
+.. function:: void acb_mat_get_imag(arb_mat_t im, const arb_mat_t mat)
+
+    Sets *re* or *im* to the real or imaginary part of *mat*, respectively.
+    The operands must have identical dimensions.
+
+.. function:: void acb_mat_set_real_imag(acb_mat_t mat, const arb_mat_t re, const arb_mat_t im)
+
+    Sets *mat* to the complex matrix with real and imaginary parts *re*, *im*.
+    The operands must have identical dimensions.
+
 Random generation
 -------------------------------------------------------------------------------
 
