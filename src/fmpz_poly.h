@@ -545,7 +545,7 @@ flint_bitcnt_t _fmpz_poly_2norm_normalised_bits(const fmpz * poly, slong len);
 
 ulong fmpz_poly_max_limbs(const fmpz_poly_t poly);
 slong fmpz_poly_max_bits(const fmpz_poly_t poly);
-void fmpz_poly_height(fmpz_t res, const fmpz_poly_t poly);
+void fmpz_poly_height(fmpz_t height, const fmpz_poly_t poly);
 slong _fmpz_poly_hamming_weight(const fmpz * a, slong len);
 
 /*  Greatest common divisor  *************************************************/

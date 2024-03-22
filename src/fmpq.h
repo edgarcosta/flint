@@ -231,7 +231,7 @@ void fmpq_mul(fmpq_t res, const fmpq_t op1, const fmpq_t op2);
 void fmpq_mul_fmpz(fmpq_t res, const fmpq_t op, const fmpz_t x);
 
 void _fmpq_pow_si(fmpz_t rnum, fmpz_t rden, const fmpz_t opnum, const fmpz_t opden, slong e);
-void fmpq_pow_si(fmpq_t rop, const fmpq_t op, slong e);
+void fmpq_pow_si(fmpq_t res, const fmpq_t op, slong e);
 
 int fmpq_pow_fmpz(fmpq_t a, const fmpq_t b, const fmpz_t e);
 

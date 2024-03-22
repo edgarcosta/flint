@@ -345,7 +345,7 @@ void fmpz_add(fmpz_t f, const fmpz_t g, const fmpz_t h);
 void fmpz_add_ui(fmpz_t f, const fmpz_t g, ulong x);
 
 void fmpz_sub(fmpz_t f, const fmpz_t g, const fmpz_t h);
-void fmpz_sub_ui(fmpz_t f, const fmpz_t g, ulong x);
+void fmpz_sub_ui(fmpz_t f, const fmpz_t g, ulong h);
 
 FMPZ_INLINE void fmpz_add_si(fmpz_t f, const fmpz_t g, slong x)
 {
