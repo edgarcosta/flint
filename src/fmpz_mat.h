@@ -239,7 +239,7 @@ void fmpz_mat_kronecker_product(fmpz_mat_t C, const fmpz_mat_t A, const fmpz_mat
 
 /* Content */
 
-void fmpz_mat_content(fmpz_t ret, const fmpz_mat_t A);
+void fmpz_mat_content(fmpz_t mat_gcd, const fmpz_mat_t A);
 
 /* Permutations */
 
@@ -428,7 +428,7 @@ fmpz_mat_can_solve(fmpz_mat_t X, fmpz_t den,
 
 /* Nullspace *****************************************************************/
 
-slong fmpz_mat_nullspace(fmpz_mat_t res, const fmpz_mat_t mat);
+slong fmpz_mat_nullspace(fmpz_mat_t B, const fmpz_mat_t A);
 
 /* Inverse *******************************************************************/
 
@@ -474,7 +474,7 @@ int fmpz_mat_is_in_snf(const fmpz_mat_t A);
 
 int fmpz_mat_is_hadamard(const fmpz_mat_t A);
 
-int fmpz_mat_hadamard(fmpz_mat_t A);
+int fmpz_mat_hadamard(fmpz_mat_t H);
 
 /* Gram matrix **************************************************************/
 

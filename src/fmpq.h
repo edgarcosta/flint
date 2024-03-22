@@ -110,7 +110,7 @@ int _fmpq_cmp_ui(const fmpz_t p, const fmpz_t q, ulong c);
 int fmpq_cmp_ui(const fmpq_t x, ulong c);
 
 int _fmpq_cmp_si(const fmpz_t p, const fmpz_t q, slong c);
-int fmpq_cmp_si(const fmpq_t x, slong c);
+int fmpq_cmp_si(const fmpq_t x, slong y);
 
 void _fmpq_canonicalise(fmpz_t num, fmpz_t den);
 void fmpq_canonicalise(fmpq_t res);
@@ -259,9 +259,9 @@ void _fmpq_gcd(fmpz_t rnum, fmpz_t rden, const fmpz_t p, const fmpz_t q, const f
 void fmpq_gcd(fmpq_t res, const fmpq_t op1, const fmpq_t op2);
 
 void _fmpq_gcd_cofactors(fmpz_t gnum, fmpz_t gden, fmpz_t abar, fmpz_t bbar, const fmpz_t anum, const fmpz_t aden, const fmpz_t bnum, const fmpz_t bden);
-void fmpq_gcd_cofactors(fmpq_t g, fmpz_t A, fmpz_t B, const fmpq_t a, const fmpq_t b);
+void fmpq_gcd_cofactors(fmpq_t g, fmpz_t abar, fmpz_t bbar, const fmpq_t a, const fmpq_t b);
 
-int _fmpq_reconstruct_fmpz(fmpz_t num, fmpz_t den, const fmpz_t a, const fmpz_t m);
+int _fmpq_reconstruct_fmpz(fmpz_t n, fmpz_t d, const fmpz_t a, const fmpz_t m);
 int fmpq_reconstruct_fmpz(fmpq_t res, const fmpz_t a, const fmpz_t m);
 
 int _fmpq_reconstruct_fmpz_2_naive(fmpz_t n, fmpz_t d, const fmpz_t a, const fmpz_t m, const fmpz_t N, const fmpz_t D);

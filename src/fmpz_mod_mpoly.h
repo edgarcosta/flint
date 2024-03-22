@@ -377,7 +377,7 @@ void fmpz_mod_mpoly_set_term_coeff_ui(fmpz_mod_mpoly_t A, slong i,
 void fmpz_mod_mpoly_set_term_coeff_si(fmpz_mod_mpoly_t A, slong i,
                                       slong c, const fmpz_mod_mpoly_ctx_t ctx);
 
-int fmpz_mod_mpoly_term_exp_fits_ui(const fmpz_mod_mpoly_t A, slong i, const fmpz_mod_mpoly_ctx_t ctx);
+int fmpz_mod_mpoly_term_exp_fits_ui(const fmpz_mod_mpoly_t poly, slong i, const fmpz_mod_mpoly_ctx_t ctx);
 int fmpz_mod_mpoly_term_exp_fits_si(const fmpz_mod_mpoly_t A, slong i, const fmpz_mod_mpoly_ctx_t ctx);
 
 void fmpz_mod_mpoly_get_term_exp_fmpz(fmpz ** exp,
