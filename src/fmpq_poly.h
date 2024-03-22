@@ -467,7 +467,7 @@ void _fmpq_poly_resultant_div(fmpz_t rnum, fmpz_t rden,
                           const fmpz *poly2, const fmpz_t den2, slong len2,
                           const fmpz_t divisor, slong nbits);
 
-void fmpq_poly_resultant_div(fmpq_t r, const fmpq_poly_t f, const fmpq_poly_t g, const fmpz_t divisor, slong nbits);
+void fmpq_poly_resultant_div(fmpq_t r, const fmpq_poly_t f, const fmpq_poly_t g, const fmpz_t div, slong nbits);
 
 /*  Derivative and integral  *************************************************/
 
@@ -496,7 +496,7 @@ void fmpq_poly_invsqrt_series(fmpq_poly_t res, const fmpq_poly_t f, slong n);
 void  _fmpq_poly_sqrt_series(fmpz * rpoly, fmpz_t rden,
                       const fmpz * poly, const fmpz_t den, slong len, slong n);
 
-void fmpq_poly_sqrt_series(fmpq_poly_t res, const fmpq_poly_t poly, slong n);
+void fmpq_poly_sqrt_series(fmpq_poly_t res, const fmpq_poly_t f, slong n);
 
 /* Power sums ****************************************************************/
 
@@ -520,7 +520,7 @@ void fmpq_poly_log_series(fmpq_poly_t res, const fmpq_poly_t f, slong n);
 void _fmpq_poly_exp_series(fmpz * g, fmpz_t gden,
                         const fmpz * h, const fmpz_t hden, slong hlen, slong n);
 
-void fmpq_poly_exp_series(fmpq_poly_t res, const fmpq_poly_t poly, slong n);
+void fmpq_poly_exp_series(fmpq_poly_t res, const fmpq_poly_t h, slong n);
 
 void _fmpq_poly_exp_expinv_series(fmpz * g, fmpz_t gden, fmpz * r, fmpz_t rden,
                         const fmpz * h, const fmpz_t hden, slong hlen, slong n);
@@ -545,7 +545,7 @@ void fmpq_poly_asin_series(fmpq_poly_t res, const fmpq_poly_t f, slong n);
 void _fmpq_poly_asinh_series(fmpz * g, fmpz_t gden,
                             const fmpz * h, const fmpz_t hden, slong hlen, slong n);
 
-void fmpq_poly_asinh_series(fmpq_poly_t res, const fmpq_poly_t poly, slong n);
+void fmpq_poly_asinh_series(fmpq_poly_t res, const fmpq_poly_t f, slong n);
 
 void _fmpq_poly_tan_series(fmpz * g, fmpz_t gden,
                             const fmpz * h, const fmpz_t hden, slong hlen, slong n);
@@ -555,7 +555,7 @@ void fmpq_poly_tan_series(fmpq_poly_t res, const fmpq_poly_t f, slong n);
 void _fmpq_poly_sin_series(fmpz * g, fmpz_t gden,
                             const fmpz * h, const fmpz_t hden, slong hlen, slong n);
 
-void fmpq_poly_sin_series(fmpq_poly_t res, const fmpq_poly_t poly, slong n);
+void fmpq_poly_sin_series(fmpq_poly_t res, const fmpq_poly_t f, slong n);
 
 void _fmpq_poly_cos_series(fmpz * g, fmpz_t gden,
                             const fmpz * h, const fmpz_t hden, slong hlen, slong n);
@@ -571,12 +571,12 @@ void fmpq_poly_sin_cos_series(fmpq_poly_t res1, fmpq_poly_t res2,
 void _fmpq_poly_sinh_series(fmpz * g, fmpz_t gden,
                             const fmpz * h, const fmpz_t hden, slong hlen, slong n);
 
-void fmpq_poly_sinh_series(fmpq_poly_t res, const fmpq_poly_t poly, slong n);
+void fmpq_poly_sinh_series(fmpq_poly_t res, const fmpq_poly_t f, slong n);
 
 void _fmpq_poly_cosh_series(fmpz * g, fmpz_t gden,
                             const fmpz * h, const fmpz_t hden, slong hlen, slong n);
 
-void fmpq_poly_cosh_series(fmpq_poly_t res, const fmpq_poly_t poly, slong n);
+void fmpq_poly_cosh_series(fmpq_poly_t res, const fmpq_poly_t f, slong n);
 
 void _fmpq_poly_sinh_cosh_series(fmpz * s, fmpz_t sden, fmpz * c, fmpz_t cden,
                             const fmpz * h, const fmpz_t hden, slong hlen, slong n);

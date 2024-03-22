@@ -156,7 +156,7 @@ FMPQ_INLINE void fmpq_get_mpq(mpq_t dest, const fmpq_t src)
     fmpz_get_mpz(mpq_denref(dest), fmpq_denref(src));
 }
 
-double fmpq_get_d(const fmpq_t a);
+double fmpq_get_d(const fmpq_t f);
 
 #ifdef __MPFR_H
 int fmpq_get_mpfr(mpfr_t r, const fmpq_t x, mpfr_rnd_t rnd);
@@ -284,10 +284,10 @@ void fmpq_next_minimal(fmpq_t res, const fmpq_t x);
 void _fmpq_next_signed_minimal(fmpz_t rnum, fmpz_t rden, const fmpz_t num, const fmpz_t den);
 void fmpq_next_signed_minimal(fmpq_t res, const fmpq_t x);
 
-void fmpq_farey_neighbors(fmpq_t left, fmpq_t right, const fmpq_t mid, const fmpz_t Q);
+void fmpq_farey_neighbors(fmpq_t l, fmpq_t r, const fmpq_t x, const fmpz_t Q);
 
 void _fmpq_simplest_between(fmpz_t x_num, fmpz_t x_den, const fmpz_t l_num, const fmpz_t l_den, const fmpz_t r_num, const fmpz_t r_den);
-void fmpq_simplest_between(fmpq_t mid, const fmpq_t l, const fmpq_t r);
+void fmpq_simplest_between(fmpq_t x, const fmpq_t l, const fmpq_t r);
 
 slong fmpq_get_cfrac_naive(fmpz * c, fmpq_t rem, const fmpq_t x, slong n);
 slong fmpq_get_cfrac(fmpz * c, fmpq_t rem, const fmpq_t x, slong n);

@@ -160,7 +160,7 @@ int fmpz_mod_poly_randtest_trinomial_irreducible(fmpz_mod_poly_t f,
                             flint_rand_t state, slong len, slong max_attempts,
                                                      const fmpz_mod_ctx_t ctx);
 
-void fmpz_mod_poly_randtest_pentomial(fmpz_mod_poly_t f, flint_rand_t state, slong len, const fmpz_mod_ctx_t ctx);
+void fmpz_mod_poly_randtest_pentomial(fmpz_mod_poly_t poly, flint_rand_t state, slong len, const fmpz_mod_ctx_t ctx);
 
 int fmpz_mod_poly_randtest_pentomial_irreducible(fmpz_mod_poly_t f,
                             flint_rand_t state, slong len, slong max_attempts,

@@ -219,7 +219,7 @@ void fmpz_mat_sqr_bodrato(fmpz_mat_t B, const fmpz_mat_t A);
 
 void fmpz_mat_sqr(fmpz_mat_t B, const fmpz_mat_t A);
 
-void fmpz_mat_pow(fmpz_mat_t B, const fmpz_mat_t A, ulong exp);
+void fmpz_mat_pow(fmpz_mat_t B, const fmpz_mat_t A, ulong e);
 
 void fmpz_mat_mul_fmpz_vec(fmpz * c, const fmpz_mat_t A,
                                                    const fmpz * b, slong blen);
@@ -472,7 +472,7 @@ int fmpz_mat_is_in_snf(const fmpz_mat_t A);
 
 /* Special matrices **********************************************************/
 
-int fmpz_mat_is_hadamard(const fmpz_mat_t A);
+int fmpz_mat_is_hadamard(const fmpz_mat_t H);
 
 int fmpz_mat_hadamard(fmpz_mat_t H);
 

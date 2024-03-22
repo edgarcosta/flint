@@ -567,7 +567,7 @@ void mag_sinh(mag_t res, const mag_t x);
 void mag_sinh_lower(mag_t res, const mag_t x);
 
 void mag_cosh(mag_t res, const mag_t x);
-void mag_cosh_lower(mag_t y, const mag_t x);
+void mag_cosh_lower(mag_t res, const mag_t x);
 
 void mag_pow_ui(mag_t res, const mag_t x, ulong e);
 void mag_pow_ui_lower(mag_t res, const mag_t x, ulong e);

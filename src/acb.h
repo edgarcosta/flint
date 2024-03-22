@@ -328,7 +328,7 @@ acb_add_error_arb(acb_t x, const arb_t err)
 
 void acb_get_mag(mag_t u, const acb_t x);
 
-void acb_get_mag_lower(mag_t z, const acb_t x);
+void acb_get_mag_lower(mag_t u, const acb_t x);
 
 void acb_get_abs_ubound_arf(arf_t u, const acb_t z, slong prec);
 void acb_get_abs_lbound_arf(arf_t u, const acb_t z, slong prec);
@@ -746,7 +746,7 @@ acb_csc(acb_t y, const acb_t x, slong prec)
 }
 
 void acb_sin_pi(acb_t s, const acb_t z, slong prec);
-void acb_cos_pi(acb_t r, const acb_t z, slong prec);
+void acb_cos_pi(acb_t s, const acb_t z, slong prec);
 void acb_sin_cos_pi(acb_t s, acb_t c, const acb_t z, slong prec);
 void acb_tan_pi(acb_t s, const acb_t z, slong prec);
 void acb_cot_pi(acb_t s, const acb_t z, slong prec);

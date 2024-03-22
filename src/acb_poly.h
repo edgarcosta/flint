@@ -89,7 +89,7 @@ acb_poly_one(acb_poly_t poly)
     _acb_poly_set_length(poly, 1);
 }
 
-void acb_poly_set_coeff_si(acb_poly_t poly, slong n, slong x);
+void acb_poly_set_coeff_si(acb_poly_t poly, slong n, slong c);
 
 void acb_poly_set_coeff_acb(acb_poly_t poly, slong n, const acb_t c);
 
