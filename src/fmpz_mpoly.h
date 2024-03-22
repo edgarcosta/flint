@@ -359,8 +359,8 @@ void fmpz_mpoly_set_term_coeff_fmpz(fmpz_mpoly_t A, slong i, const fmpz_t c, con
 void fmpz_mpoly_set_term_coeff_ui(fmpz_mpoly_t A, slong i, ulong c, const fmpz_mpoly_ctx_t ctx);
 void fmpz_mpoly_set_term_coeff_si(fmpz_mpoly_t A, slong i, slong c, const fmpz_mpoly_ctx_t ctx);
 
-int fmpz_mpoly_term_exp_fits_ui(const fmpz_mpoly_t A, slong i, const fmpz_mpoly_ctx_t ctx);
-int fmpz_mpoly_term_exp_fits_si(const fmpz_mpoly_t A, slong i, const fmpz_mpoly_ctx_t ctx);
+int fmpz_mpoly_term_exp_fits_ui(const fmpz_mpoly_t poly, slong i, const fmpz_mpoly_ctx_t ctx);
+int fmpz_mpoly_term_exp_fits_si(const fmpz_mpoly_t poly, slong i, const fmpz_mpoly_ctx_t ctx);
 
 void fmpz_mpoly_get_term_exp_fmpz(fmpz ** exp, const fmpz_mpoly_t A,
                                           slong i, const fmpz_mpoly_ctx_t ctx);
@@ -958,7 +958,7 @@ typedef fmpz_mpoly_vec_struct fmpz_mpoly_vec_t[1];
 #define fmpz_mpoly_vec_entry(vec, i) ((vec)->p + (i))
 
 void fmpz_mpoly_vec_init(fmpz_mpoly_vec_t vec, slong len, const fmpz_mpoly_ctx_t ctx);
-void fmpz_mpoly_vec_print(const fmpz_mpoly_vec_t F, const fmpz_mpoly_ctx_t ctx);
+void fmpz_mpoly_vec_print(const fmpz_mpoly_vec_t vec, const fmpz_mpoly_ctx_t ctx);
 void fmpz_mpoly_vec_swap(fmpz_mpoly_vec_t x, fmpz_mpoly_vec_t y, const fmpz_mpoly_ctx_t ctx);
 void fmpz_mpoly_vec_fit_length(fmpz_mpoly_vec_t vec, slong len, const fmpz_mpoly_ctx_t ctx);
 void fmpz_mpoly_vec_clear(fmpz_mpoly_vec_t vec, const fmpz_mpoly_ctx_t ctx);

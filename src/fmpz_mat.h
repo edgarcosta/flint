@@ -432,7 +432,7 @@ slong fmpz_mat_nullspace(fmpz_mat_t res, const fmpz_mat_t mat);
 
 /* Inverse *******************************************************************/
 
-int fmpz_mat_inv(fmpz_mat_t B, fmpz_t den, const fmpz_mat_t A);
+int fmpz_mat_inv(fmpz_mat_t Ainv, fmpz_t den, const fmpz_mat_t A);
 
 /* Modular reduction and reconstruction **************************************/
 

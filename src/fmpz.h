@@ -100,7 +100,7 @@ void flint_mpz_clear_readonly(mpz_t z);
 void _fmpz_clear_readonly_mpz(mpz_t);
 void fmpz_clear_readonly(fmpz_t f);
 
-int _fmpz_is_canonical(const fmpz_t x);
+int _fmpz_is_canonical(const fmpz_t f);
 
 /* Randomisation *************************************************************/
 
@@ -245,7 +245,7 @@ fmpz_set_signed_uiui(fmpz_t r, ulong hi, ulong lo)
     }
 }
 
-void fmpz_set_signed_uiuiui(fmpz_t r, ulong hi, ulong mid, ulong lo);
+void fmpz_set_signed_uiuiui(fmpz_t f, ulong hi, ulong mid, ulong lo);
 
 void fmpz_get_ui_array(ulong * out, slong n, const fmpz_t in);
 void fmpz_set_ui_array(fmpz_t out, const ulong * in, slong n);
@@ -392,10 +392,10 @@ void fmpz_one_2exp(fmpz_t f, ulong exp);
 
 void fmpz_addmul(fmpz_t f, const fmpz_t g, const fmpz_t h);
 void fmpz_addmul_si(fmpz_t f, const fmpz_t g, slong x);
-void fmpz_addmul_ui(fmpz_t f, const fmpz_t g, ulong x);
+void fmpz_addmul_ui(fmpz_t f, const fmpz_t g, ulong h);
 
 void fmpz_submul(fmpz_t f, const fmpz_t g, const fmpz_t h);
-void fmpz_submul_si(fmpz_t f, const fmpz_t g, slong x);
+void fmpz_submul_si(fmpz_t f, const fmpz_t g, slong h);
 void fmpz_submul_ui(fmpz_t f, const fmpz_t g, ulong x);
 
 void fmpz_fmma(fmpz_t f, const fmpz_t a, const fmpz_t b, const fmpz_t c, const fmpz_t d);
@@ -591,12 +591,12 @@ void fmpz_fac_ui(fmpz_t f, ulong n);
 void fmpz_bin_uiui(fmpz_t res, ulong n, ulong k);
 
 void _fmpz_rfac_ui(fmpz_t r, const fmpz_t x, ulong a, ulong b);
-void fmpz_rfac_ui(fmpz_t r, const fmpz_t x, ulong n);
+void fmpz_rfac_ui(fmpz_t r, const fmpz_t x, ulong k);
 void fmpz_rfac_uiui(fmpz_t r, ulong x, ulong n);
 
 /* Number theoretic functions ************************************************/
 
-int fmpz_jacobi(const fmpz_t a, const fmpz_t p);
+int fmpz_jacobi(const fmpz_t a, const fmpz_t n);
 int fmpz_kronecker(const fmpz_t a, const fmpz_t n);
 
 void fmpz_fib_ui(fmpz_t f, ulong n);

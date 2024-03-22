@@ -322,7 +322,7 @@ void fmpz_poly_scalar_tdiv_2exp(fmpz_poly_t poly1, const fmpz_poly_t poly2,
 void fmpz_poly_scalar_mul_2exp(fmpz_poly_t poly1, const fmpz_poly_t poly2,
                            ulong exp);
 
-void fmpz_poly_scalar_mod_fmpz(fmpz_poly_t poly1, const fmpz_poly_t poly2, const fmpz_t x);
+void fmpz_poly_scalar_mod_fmpz(fmpz_poly_t poly1, const fmpz_poly_t poly2, const fmpz_t p);
 void fmpz_poly_scalar_smod_fmpz(fmpz_poly_t poly1, const fmpz_poly_t poly2, const fmpz_t x);
 
 slong _fmpz_poly_remove_content_2exp(fmpz * pol, slong len);
@@ -1075,7 +1075,7 @@ void fmpz_poly_debug(const fmpz_poly_t poly);
 
 /*  CRT  ********************************************************************/
 
-void fmpz_poly_get_nmod_poly(nmod_poly_t res, const fmpz_poly_t poly);
+void fmpz_poly_get_nmod_poly(nmod_poly_t Amod, const fmpz_poly_t A);
 
 void fmpz_poly_set_nmod_poly(fmpz_poly_t res, const nmod_poly_t poly);
 
@@ -1185,11 +1185,11 @@ void fmpz_poly_bound_roots(fmpz_t bound, const fmpz_poly_t poly);
 
 void _fmpz_poly_num_real_roots_sturm(slong * n_neg, slong * n_pos, const fmpz * pol, slong len);
 
-slong fmpz_poly_num_real_roots_sturm(const fmpz_poly_t poly);
+slong fmpz_poly_num_real_roots_sturm(const fmpz_poly_t pol);
 
 slong _fmpz_poly_num_real_roots(const fmpz * pol, slong len);
 
-slong fmpz_poly_num_real_roots(const fmpz_poly_t poly);
+slong fmpz_poly_num_real_roots(const fmpz_poly_t pol);
 
 /* CLD bounds */
 
@@ -1239,7 +1239,7 @@ void fmpz_poly_fibonacci(fmpz_poly_t poly, ulong n);
 
 void _fmpz_poly_eta_qexp(fmpz * f, slong e, slong n);
 
-void fmpz_poly_eta_qexp(fmpz_poly_t f, slong e, slong n);
+void fmpz_poly_eta_qexp(fmpz_poly_t f, slong r, slong n);
 
 void _fmpz_poly_theta_qexp(fmpz * f, slong e, slong n);
 

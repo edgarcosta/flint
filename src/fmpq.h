@@ -258,7 +258,7 @@ int fmpq_mod_fmpz(fmpz_t res, const fmpq_t x, const fmpz_t mod);
 void _fmpq_gcd(fmpz_t rnum, fmpz_t rden, const fmpz_t p, const fmpz_t q, const fmpz_t r, const fmpz_t s);
 void fmpq_gcd(fmpq_t res, const fmpq_t op1, const fmpq_t op2);
 
-void _fmpq_gcd_cofactors(fmpz_t ng, fmpz_t dg, fmpz_t A, fmpz_t B, const fmpz_t na, const fmpz_t da, const fmpz_t nb, const fmpz_t db);
+void _fmpq_gcd_cofactors(fmpz_t gnum, fmpz_t gden, fmpz_t abar, fmpz_t bbar, const fmpz_t anum, const fmpz_t aden, const fmpz_t bnum, const fmpz_t bden);
 void fmpq_gcd_cofactors(fmpq_t g, fmpz_t A, fmpz_t B, const fmpq_t a, const fmpq_t b);
 
 int _fmpq_reconstruct_fmpz(fmpz_t num, fmpz_t den, const fmpz_t a, const fmpz_t m);
@@ -286,7 +286,7 @@ void fmpq_next_signed_minimal(fmpq_t res, const fmpq_t x);
 
 void fmpq_farey_neighbors(fmpq_t left, fmpq_t right, const fmpq_t mid, const fmpz_t Q);
 
-void _fmpq_simplest_between(fmpz_t mid_num, fmpz_t mid_den, const fmpz_t l_num, const fmpz_t l_den, const fmpz_t r_num, const fmpz_t r_den);
+void _fmpq_simplest_between(fmpz_t x_num, fmpz_t x_den, const fmpz_t l_num, const fmpz_t l_den, const fmpz_t r_num, const fmpz_t r_den);
 void fmpq_simplest_between(fmpq_t mid, const fmpq_t l, const fmpq_t r);
 
 slong fmpq_get_cfrac_naive(fmpz * c, fmpq_t rem, const fmpq_t x, slong n);
