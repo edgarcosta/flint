@@ -366,7 +366,7 @@ FMPZ_INLINE void fmpz_sub_si(fmpz_t f, const fmpz_t g, slong x)
 void fmpz_abs(fmpz_t f1, const fmpz_t f2);
 void fmpz_neg(fmpz_t f1, const fmpz_t f2);
 
-void fmpz_mul_ui(fmpz_t f, const fmpz_t g, ulong x);
+void fmpz_mul_ui(fmpz_t f, const fmpz_t g, ulong h);
 void fmpz_mul_si(fmpz_t f, const fmpz_t g, slong h);
 void fmpz_mul(fmpz_t f, const fmpz_t g, const fmpz_t h);
 
@@ -388,7 +388,7 @@ fmpz_mul2_uiui(fmpz_t f, const fmpz_t g, ulong h1, ulong h2)
 }
 
 void fmpz_mul_2exp(fmpz_t f, const fmpz_t g, ulong e);
-void fmpz_one_2exp(fmpz_t f, ulong exp);
+void fmpz_one_2exp(fmpz_t f, ulong e);
 
 void fmpz_addmul(fmpz_t f, const fmpz_t g, const fmpz_t h);
 void fmpz_addmul_si(fmpz_t f, const fmpz_t g, slong h);

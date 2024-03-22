@@ -667,7 +667,7 @@ void fmpz_mod_poly_minpoly(fmpz_mod_poly_t poly, const fmpz* seq, slong len, con
 /*  Resultant  ***************************************************************/
 
 void _fmpz_mod_poly_resultant(fmpz_t res, const fmpz *A, slong lenA, const fmpz *B, slong lenB, const fmpz_mod_ctx_t ctx);
-void fmpz_mod_poly_resultant(fmpz_t res, const fmpz_mod_poly_t A, const fmpz_mod_poly_t B, const fmpz_mod_ctx_t ctx);
+void fmpz_mod_poly_resultant(fmpz_t res, const fmpz_mod_poly_t f, const fmpz_mod_poly_t g, const fmpz_mod_ctx_t ctx);
 
 /*  Discriminant  ************************************************************/
 

@@ -1243,7 +1243,7 @@ void fmpz_poly_eta_qexp(fmpz_poly_t f, slong r, slong n);
 
 void _fmpz_poly_theta_qexp(fmpz * f, slong e, slong n);
 
-void fmpz_poly_theta_qexp(fmpz_poly_t f, slong e, slong n);
+void fmpz_poly_theta_qexp(fmpz_poly_t f, slong r, slong n);
 
 void fmpz_poly_eulerian_polynomial(fmpz_poly_t poly, ulong n);
 

@@ -107,7 +107,7 @@ int _fmpq_cmp_fmpz(const fmpz_t p, const fmpz_t q, const fmpz_t r);
 int fmpq_cmp_fmpz(const fmpq_t x, const fmpz_t y);
 
 int _fmpq_cmp_ui(const fmpz_t p, const fmpz_t q, ulong c);
-int fmpq_cmp_ui(const fmpq_t x, ulong c);
+int fmpq_cmp_ui(const fmpq_t x, ulong y);
 
 int _fmpq_cmp_si(const fmpz_t p, const fmpz_t q, slong c);
 int fmpq_cmp_si(const fmpq_t x, slong y);
