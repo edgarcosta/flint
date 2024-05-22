@@ -26,7 +26,7 @@ tar -xf ${archive_prefix}.tar.gz
 rm ${archive_prefix}.tar.gz
 
 # update VERSION file
-printf $flint_version > ${archive_prefix}/VERSION
+printf $flint_version > VERSION
 
 echo "Bootstrapping"
 ./bootstrap.sh
@@ -36,6 +36,7 @@ echo "Adding / patching / removing files"
 cp -r config ${archive_prefix}/
 cp configure ${archive_prefix}/
 cp src/config.h.in ${archive_prefix}/src/
+cp VERSION ${archive_prefix}/
 
 # remove some things we don't want to install
 pushd ${archive_prefix}
