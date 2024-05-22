@@ -158,7 +158,7 @@ jobs:
       contents: write
 
     # so it only publishes releases on the main repository
-    if: github.repository == 'flintlib/flint'
+    # if: github.repository == 'flintlib/flint'
 
     steps:
       - name: "Download archive from previous job"
