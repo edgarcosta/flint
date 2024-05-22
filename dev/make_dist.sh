@@ -26,11 +26,10 @@ tar -xf ${archive_prefix}.tar.gz
 rm ${archive_prefix}.tar.gz
 
 # update VERSION file
-printf $flint_version > VERSION
+printf $flint_version > ${archive_prefix}/VERSION
 
 echo "Bootstrapping"
 ./bootstrap.sh
-
 
 echo "Adding / patching / removing files"
 # copy some files that should be included in the distribution archive
