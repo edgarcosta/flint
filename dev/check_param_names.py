@@ -909,10 +909,45 @@ def apply_fixes(results, src_dir, dry_run=False):
                 for idx, hdr_name, src_name in hs["diffs"]:
                     renames_src.append((src_name, hdr_name))
 
+            # Filter out renames that would make names less
+            # descriptive.  Heuristics:
+            #   1. Renaming a multi-char name to a single letter
+            #      (e.g. poly -> f)
+            #   2. Renaming a name that appears in the module name
+            #      to one that does not (e.g. vec -> poly in ca_vec)
+            def filter_descriptive_renames(renames, label):
+                if not renames:
+                    return renames
+                safe = []
+                mod_parts = mod.split("_")
+                for old, new in renames:
+                    if len(new) == 1 and len(old) > 1:
+                        print(f"  SKIP {func_name} rename {old}->{new}"
+                              f" in {label}: target '{new}' is less"
+                              " descriptive (manual review needed)")
+                        skipped_renames.append(
+                            (func_name, old, new, label))
+                    elif (old in mod_parts and new not in mod_parts
+                          and len(old) > 1):
+                        print(f"  SKIP {func_name} rename {old}->{new}"
+                              f" in {label}: source '{old}' matches"
+                              " module name (manual review needed)")
+                        skipped_renames.append(
+                            (func_name, old, new, label))
+                    else:
+                        safe.append((old, new))
+                return safe
+
+            skipped_renames = []
+            renames_hdr = filter_descriptive_renames(
+                renames_hdr, "header")
+            renames_src = filter_descriptive_renames(
+                renames_src, "source")
+
             # Filter out renames that would collide.
             # Case 1: new_name is already a param not being renamed.
             # Case 2: overlapping renames (swaps) where new_name
-            #   equals old_name of another rename — sequential
+            #   equals old_name of another rename -- sequential
             #   regex can't handle this correctly.
             def filter_safe_renames(renames, params, label):
                 if not renames or not params:
@@ -939,6 +974,9 @@ def apply_fixes(results, src_dir, dry_run=False):
             renames_hdr = filter_safe_renames(
                 renames_hdr, hdr_params, "header"
             )
+
+            if skipped_renames:
+                skipped += len(skipped_renames)
 
             # Apply fixes
             if renames_hdr:

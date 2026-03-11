@@ -1090,5 +1090,91 @@ class TestApplyFixes(unittest.TestCase):
         self.assertIn("x = len + cache->length;", content)
 
 
+    def test_skip_rename_to_single_letter(self):
+        """Renaming a multi-char name to a single letter should be
+        skipped as less descriptive."""
+        hdr_path = self._write("src/mymod.h",
+            "void mymod_set(mymod_t f, const mymod_t g);\n"
+        )
+        rst_path = self._write("doc/source/mymod.rst",
+            ".. function:: void mymod_set(mymod_t f, const mymod_t g)\n"
+            "\n"
+            "    Sets f to g.\n"
+        )
+        src_path = self._write("src/mymod/set.c",
+            "void mymod_set(mymod_t poly, const mymod_t other)\n"
+            "{\n"
+            "    poly->x = other->x;\n"
+            "}\n"
+        )
+        src_dir = os.path.join(self.tmpdir, "src")
+        modules = [("mymod", hdr_path, rst_path)]
+        results = collect_mismatches(modules, src_dir, check_src=True)
+        fixed, skipped = apply_fixes(results, src_dir)
+        # poly->f should be skipped (single letter target)
+        self.assertGreater(skipped, 0)
+        with open(src_path) as f:
+            content = f.read()
+        # poly should NOT have been renamed to f
+        self.assertIn("mymod_t poly", content)
+
+    def test_skip_rename_matching_module_name(self):
+        """Renaming a name that matches a module name part should be
+        skipped."""
+        hdr_path = self._write("src/my_vec.h",
+            "void my_vec_print(const my_vec_t poly);\n"
+        )
+        rst_path = self._write("doc/source/my_vec.rst",
+            ".. function:: void my_vec_print(const my_vec_t poly)\n"
+            "\n"
+            "    Prints the vector.\n"
+        )
+        src_path = self._write("src/my_vec/print.c",
+            "void my_vec_print(const my_vec_t vec)\n"
+            "{\n"
+            "    print(vec);\n"
+            "}\n"
+        )
+        src_dir = os.path.join(self.tmpdir, "src")
+        modules = [("my_vec", hdr_path, rst_path)]
+        results = collect_mismatches(modules, src_dir, check_src=True)
+        fixed, skipped = apply_fixes(results, src_dir)
+        # vec->poly should be skipped (vec matches module name)
+        self.assertGreater(skipped, 0)
+        with open(src_path) as f:
+            content = f.read()
+        # vec should NOT have been renamed to poly
+        self.assertIn("my_vec_t vec", content)
+
+    def test_allow_rename_when_equally_descriptive(self):
+        """Renaming between multi-char names that don't match the
+        module should proceed normally."""
+        hdr_path = self._write("src/mymod.h",
+            "void mymod_add(mymod_t res, const mymod_t op);\n"
+        )
+        rst_path = self._write("doc/source/mymod.rst",
+            ".. function:: void mymod_add(mymod_t res, const mymod_t op)\n"
+            "\n"
+            "    Adds.\n"
+        )
+        src_path = self._write("src/mymod/add.c",
+            "void mymod_add(mymod_t result, const mymod_t operand)\n"
+            "{\n"
+            "    result->x = operand->x;\n"
+            "}\n"
+        )
+        src_dir = os.path.join(self.tmpdir, "src")
+        modules = [("mymod", hdr_path, rst_path)]
+        results = collect_mismatches(modules, src_dir, check_src=True)
+        fixed, skipped = apply_fixes(results, src_dir)
+        # result->res and operand->op are fine (neither is single
+        # letter, neither matches module name)
+        self.assertGreater(fixed, 0)
+        with open(src_path) as f:
+            content = f.read()
+        self.assertIn("mymod_t res", content)
+        self.assertIn("mymod_t op", content)
+
+
 if __name__ == "__main__":
     unittest.main()
