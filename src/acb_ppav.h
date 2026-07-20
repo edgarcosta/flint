@@ -28,22 +28,21 @@ void acb_ppav_agm_max_diff(arf_t delta, acb_srcptr a, slong g, slong prec);
 int acb_ppav_agm(acb_ptr r, acb_srcptr a, const arf_t eps,
     slong g, slong prec);
 
-int acb_ppav_periods_from_theta0b(acb_mat_t res, acb_srcptr th,
+int acb_ppav_periods_from_theta2(acb_mat_t res, acb_srcptr th,
     slong g, slong prec);
 
 /* Periods of elliptic curves */
 
 /* Periods of genus 2 curves */
 
-int acb_ppav_g2_weierstrass(acb_ptr w, const acb_poly_t crv,
-    slong g, slong prec);
+int acb_ppav_g2_weierstrass(acb_ptr w, const acb_poly_t crv, slong prec);
 void acb_ppav_g2_rosenhain(acb_ptr ros, acb_srcptr w, slong perm, slong prec);
-void acb_ppav_g2_theta4(acb_ptr th4, acb_srcptr ros, slong prec);
+slong acb_ppav_g2_theta4(acb_ptr th4, acb_srcptr ros, slong prec);
 void acb_ppav_g2_theta2(acb_ptr th2, acb_srcptr th4, acb_srcptr ros,
     slong signs, slong prec);
 
-int acb_ppav_g2_periods_poss(acb_mat_t res, acb_srcptr th2, slong prec);
-int acb_ppav_g2_periods_cert(const acb_mat_t res, acb_srcptr th2, slong prec);
+int acb_ppav_g2_periods_certify(const acb_mat_t res, const ca_poly_t crv, slong prec);
+
 int acb_ppav_g2_periods(acb_mat_t tau, slong * perm, slong * signs,
     acb_ptr w, const acb_poly_t crv, slong prec);
 void acb_ppav_g2_periods_with_info(acb_mat_t tau, const slong * perm,
