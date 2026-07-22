@@ -12,14 +12,21 @@
 #ifndef ACB_PPAV_H
 #define ACB_PPAV_H
 
-#ifdef __cplusplus
-extern "C" {
+#ifdef ACB_PPAV_INLINES_C
+#define ACB_PPAV_INLINE
+#else
+#define ACB_PPAV_INLINE static inline
 #endif
 
 #include "fmpz_types.h"
 #include "fmpq_types.h"
 #include "acb_types.h"
+#include "nf_types.h"
 #include "ca_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Periods from thetas in genus 1 and 2 by the AGM method */
 
@@ -82,27 +89,83 @@ void acb_ppav_g2_periods_ca(acb_mat_t tau, ca_poly_t f, slong prec);
 
 slong acb_ppav_g2_aut(const ca_poly_t crv);
 
-int acb_ppav_g2_isom(acb_mat_t r, const acb_poly_t f1,
+void acb_ppav_g2_isom(acb_mat_t r, const acb_poly_t f1,
     const acb_poly_t f2, slong aut, slong prec);
 
-int acb_ppav_g2_periods_hilbert(acb_ptr t, const acb_mat_t tau,
-    const acb_mat_t curve_isom, const ca_mat_t rm_action, slong prec);
+void acb_ppav_g2_periods_big_ca(acb_mat_t pi, ca_poly_t f, slong prec);
+void acb_ppav_g2_periods_rm_ca(acb_ptr t, const ca_poly_t f,
+    const ca_mat_t rm, slong prec);
+
+/* Principally polarized abelian surfaces over Q */
+
+typedef struct
+{
+    fmpz_vec_struct m;
+    fmpz_poly_struct f;
+    ca_poly_struct e1, e2;
+    fmpq_mat_struct rm;
+    acb_ppav_g2_periods_info_struct info;
+}
+acb_ppav_g2_Q_struct;
+
+typedef acb_ppav_g2_Q_struct acb_ppav_g2_Q_t[1];
+
+#define acb_ppav_g2_Q_modular_invariants(A) (&(A)->m)
+
+void acb_ppav_g2_Q_init(acb_ppav_g2_Q_t A);
+void acb_ppav_g2_Q_clear(acb_ppav_g2_Q_t A);
+
+void acb_ppav_g2_Q_set_jac(acb_ppav_g2_Q_t A, const fmpz_poly_t f);
+void acb_ppav_g2_Q_set_split(acb_ppav_g2_Q_t A, const fmpz_poly_t e1,
+    const fmpz_poly_t e2);
+void acb_ppav_g2_Q_set_weil(acb_ppav_g2_Q_t A, const nf_elem_t a, const nf_elem_t b);
+void acb_ppav_g2_Q_set_rm(acb_ppav_g2_Q_t A, const fmpz_poly_t f,
+    const fmpq_mat_t rm);
+
+int acb_ppav_g2_Q_is_jac(const acb_ppav_g2_Q_t A);
+int acb_ppav_g2_Q_is_split(const acb_ppav_g2_Q_t A);
+int acb_ppav_g2_Q_is_weil(const acb_ppav_g2_Q_t A);
+slong acb_ppav_g2_Q_has_rm(const acb_ppav_g2_Q_t A);
+
+void acb_ppav_g2_Q_modular_invariants(fmpz_vec_t m, const acb_ppav_g2_Q_t A);
+void acb_ppav_g2_Q_igusa_invariants(fmpq_vec_t j, const acb_ppav_g2_Q_t A);
+void acb_ppav_g2_Q_curve(fmpz_poly_t f, const acb_ppav_g2_Q_t A);
+void acb_ppav_g2_Q_elliptic_factor(ca_poly_t e, const acb_ppav_g2_Q_t A, slong k);
+
+void acb_ppav_g2_Q_periods(acb_mat_t tau, const acb_ppav_g2_Q_t A, slong prec);
+void acb_ppav_g2_Q_periods_big(acb_mat_t pi, const acb_ppav_g2_Q_t A, slong prec);
+void acb_ppav_g2_Q_periods_rm(acb_ptr t, const acb_ppav_g2_Q_t A, slong prec);
 
 /* Hecke operators */
 
-void acb_ppav_g2_siegel_coset();
-void acb_ppav_g2_siegel_2step_coset();
-void acb_ppav_g2_hilbert_coset();
+ACB_PPAV_INLINE slong
+acb_ppav_g2_siegel_coset_nb(slong ell)
+{
+    return (n_pow(ell,4) - 1) / (ell - 1);
+}
 
-void acb_ppav_g2_hecke_images(acb_ptr hecke, const acb_mat_t tau,
-    const acb_t cofactor, slong ell, slong prec);
-slong acb_ppav_g2_hecke_images_integral(fmpz_vec_t * j, slong ** cosets,
-    acb_srcptr hecke, slong prec);
+ACB_PPAV_INLINE slong
+acb_ppav_g2_siegel_2step_coset_nb(slong ell)
+{
+    return ell * acb_ppav_g2_siegel_coset_nb(ell);
+}
 
-slong acb_ppav_g2_hecke_int_images_poss(fmpz_vec_t * j, slong ** cosets,
-    const acb_mat_t tau, const acb_t cofactor, slong ell, slong prec);
-slong acb_ppav_g2_hecke_hilbert_int_images_poss(fmpz_vec_t * j, slong ** cosets,
-    acb_srcptr t, const acb_t cofactor, slong prec); /* ideal missing */
+slong acb_ppav_g2_hilbert_coset_nb(const nf_elem_t beta, slong q);
+
+void acb_ppav_g2_siegel_coset(fmpz_mat_t mat, slong k, slong ell);
+void acb_ppav_g2_siegel_2step_coset(fmpz_mat_t mat, slong k, slong ell);
+void acb_ppav_g2_hilbert_coset(fmpz_mat_t mat, slong k, const nf_elem_t beta,
+    slong q);
+
+/* Isogenous abelian varieties */
+
+slong acb_ppav_g2_Q_siegel_isog(acb_ppav_g2_Q_struct ** B,
+    const acb_ppav_g2_Q_t A, slong ell);
+slong acb_ppav_g2_Q_siegel_2step_isog(acb_ppav_g2_Q_struct ** B,
+    const acb_ppav_g2_Q_t A, slong ell);
+slong acb_ppav_g2_Q_hilbert_isog(acb_ppav_g2_Q_struct ** B,
+    const acb_ppav_g2_Q_t A, const nf_elem_t beta, slong q,
+    slong hmf_cofactor);
 
 #ifdef __cplusplus
 }

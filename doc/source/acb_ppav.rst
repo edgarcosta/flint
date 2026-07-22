@@ -279,8 +279,7 @@ Periods of genus 2 curves
 .. type:: acb_ppav_g2_periods_info_t
 
     These types are intended to store the information from one run of computing
-    periods (typically at low precision) for a given genus 2 curve or from
-    given Igusa invariants: choice of curve in Mestre's algorithm, ordering of
+    periods (typically at low precision) for a given genus 2 curve: ordering of
     Weierstrass points, possible permutation and sign choices when computing
     squared theta values, and symplectic transformations computed by
     :func:`acb_ppav_g2_periods_gather` if any.
@@ -425,8 +424,337 @@ Big period matrices and periods in Hilbert space
     finitely many possibilities, each corresponding to a possible automorphism
     groups (TBC).
 
-    ALGORITHM: Cardona--Quer.
+    ALGORITHM: Cardona--Quer, "Field of moduli and field of definition for
+    curves of genus 2". The invariants `R`, etc. should be computed by
+    Ueberschiebungs as in :func:`acb_theta_g2_covariants`.
 
-.. function:: int acb_ppav_g2_isom(acb_mat_t r, const acb_poly_t f1, const acb_poly_t f2, slong aut, slong prec)
+.. function:: void acb_ppav_g2_isom(acb_mat_t r, const acb_poly_t f1, const acb_poly_t f2, slong aut, slong prec)
 
+    Given two degree 6 polynomials `f_1` and `f_2` such that the genus 2 curves
+    `y^2 = f_1(x)` and `y^2 = f_2(x)` are isomorphic, compute an automorphism
+    between them in the form of a matrix `r\in \mathrm{GL}_2(\mathbb{C})`.
+
+    ALGORITHM: Follow the hyperellisom function in Pari/GP, which is itself
+    following
+    https://github.com/JRSijsling/hyperelliptic/blob/main/magma/toolbox/isgl2equiv.m
+    We should figure out how this algorithm behaves when the curves are inexact
+    approximations of curves with extra automorphisms. I suspect we will need
+    to know what the automorphism group is a priori, hence the *aut* argument.
+
+.. function:: void acb_ppav_g2_periods_big_ca(acb_mat_t pi, ca_poly_t f, slong prec)
+
+    Given a squarefree polynomial `f` of degree 5 or 6, compute a big period
+    matrix `\Pi` of the genus 2 curve `y^2 = f(x)`, with respect to the
+    canonical basis of differential forms `(x dx/y, dx/y)` and some homology
+    basis.This matrix will be `2\times 4`, of the form `(r\ r\tau)` where
+    `\tau` is a small period matrix very close to the Siegel fundamental
+    domain.
+
+    ALGORITHM: first compute a small period matrix `\tau` using
+    :func:`acb_ppav_g2_periods_ca`. Then compute a second curve equation `y^2 =
+    f_\tau(x)` whose canonical basis of differential forms corresponds to the
+    basis `(2\pi i dz_1, 2\pi i dz_2)` on the complex torus attached to
+    `\tau`. This curve can be computed using
+    :func:`acb_theta_g2_sextic_chi5`. Then compute a matrix `r` giving an
+    isomorphism between `y^2 = f_\tau(x)` and `y^2 = f(x)` using
+    :func:`acb_ppav_g2_isom`, after computing the automorphism group using
+    :func:`acb_ppav_g2_aut` and casting the polynomial to
+    :type:`acb_poly_t`. This `r` should be exactly the one appearing in the big
+    period matrix (or maybe its inverse/transpose/multiplication by `2\pi
+    i`... need to sort out the details here).
+
+.. function:: void acb_ppav_g2_periods_rm_ca(acb_ptr t, const ca_poly_t f, const ca_mat_t rm, slong prec)
+
+    Given a squarefree polynomial `f` of degree 5 or 6 such that the Jacobian
+    of the genus 2 curve `y^2 = f(x)` has real multiplication by the full ring
+    of integers `\mathbb{Z}_K` in a real quadratic field `K =
+    \mathbb{Q}(\sqrt{\Delta})`, compute a pair of complex numbers `t =
+    (t_1,t_2)` giving the corresponding moduli point on the Hilbert surface
+    `\mathrm{SL}_2(\mathbb{Z}_K)\backslash \mathcal{H}_1^2`. The input matrix
+    *rm* should encode the action of `\sqrt{\Delta}` on the canonical basis of
+    differential forms `(x dx/y, dx/y)` of the curve.
+
+    ALGORITHM: This uses the description in Birkenhake-Wilhelm, "Humbert
+    surfaces and the Kummer plane", 4.1 to 4.5. The first step will be to
+    compute the rational representation of `\sqrt{\Delta}` acting on the
+    lattice `\tau\mathbb{Z}^g + \mathbb{Z}^g`; this will be possible after we
+    compute the big period matrix using :func:`acb_ppav_g2_periods_big_ca`, and
+    provides the integral coefficients `a,b,c,d,e` of the Humbert singular
+    relation satisfied by `\tau`. Then Proposition 4.5 provides the successive
+    steps to move `\tau` to the linear image of `\mathcal{H}_1^2`.
+
+    The relevant HDME code is in hdme/hilbert/hilbert_inverse.c (after the
+    coefficients `a,b,c,d,e` are computed).
+
+Principally polarized abelian surfaces over Q
+-------------------------------------------------------------------------------
+
+.. type:: acb_ppav_g2_Q_struct
+
+.. type:: acb_ppav_g2_Q_t
+
+    These types are intended to store information on a principally polarized
+    abelian surface over Q. This abelian surface could be the Jacobian of a
+    genus 2 curve, or a product of two elliptic curves, or the Weil restriction
+    of an elliptic curve over a quadratic field. We store information related
+    to modular invariants, curve equations, real endomorphisms, and complex periods.
+
+    An :type:`acb_ppav_g2_Q_t` is an array of length one of type
+    :type:`acb_ppav_g2_Q_struct` encoding an ellipsoid as described above,
+    alllowing it to be passed by reference.
+
+.. function:: void acb_ppav_g2_Q_init(acb_ppav_g2_Q_t A)
+
+    Initializes *A*.
+
+.. function:: void acb_ppav_g2_Q_clear(acb_ppav_g2_Q_t A)
+
+    Clears *A*.
+
+.. function:: void acb_ppav_g2_Q_set_jac(acb_ppav_g2_Q_t A, const fmpz_poly_t f)
+
+    Sets *A* to the Jacobian of the genus 2 curve `y^2 = f(x)`. The polynomial
+    *f* must be squarefree of degree 5 or 6.
+
+    ALGORITHM: Compute the modular invariants using Ueberschiebungs; compute
+    the Igusa invariants; call :func:`acb_ppav_g2_periods_lowprec` at
+    increasing precisions until it succeeds to fill in the periods information,
+    and set *prec* to the precision where this computation succeeded.
+
+.. function:: void acb_ppav_g2_Q_set_split(acb_ppav_g2_Q_t A, const fmpz_poly_t e1, const fmpz_poly_t e2
+
+    Sets *A* to the product `E_1\times E_2`, where `E_i` is the elliptic curves
+    `y^2 = e_i(x)` for `i=1,2`. The polynomials *e1* and *e2* should be in
+    short Weierstrass form `x^3 + ax + b` with nonzero discriminant.
+
+    ALGORITHM: Compute the modular invariants from the Weierstrass
+    coefficients; convert *e1* and *e2* to :type:`ca_poly_t`; maybe call the
+    elliptic curve period functions?
+
+.. function:: void acb_ppav_g2_Q_set_weil(acb_ppav_g2_Q_t A, const nf_elem_t a, const nf_elem_t b)
+
+    Sets *A* to the Weil restriction of the elliptic curve `y^2 = x^3 + ax +
+    b`. The elements `a,b` must be integers in a common quadratic field and the
+    discriminant must be nonzero.
+
+    ALGORITHM: Compute the polynomial `x^3 + ax + b` and its conjugate as
+    :type:`ca_poly_t`'s, then proceed as in :func:`acb_ppav_g2_Q_set_ell`. We
+    could check that it isn't actually isomorphic to a product of elliptic
+    curves over `\mathbb{Q}` as well. This should be easily seen from the
+    invariants.
+
+.. function:: void acb_ppav_g2_Q_set_rm(acb_ppav_g2_Q_t A, const fmpz_poly_t f, const fmpq_mat_t rm)
+
+    Sets *A* to the Jacobian of the genus 2 curve `y^2 = f(x)`. The polynomial
+    *f* must be squarefree of degree 5 or 6. The additional assumption in this
+    function is that the curve should have real multiplication by the full ring
+    of integers in a real quadratic field `\mathbb{Q}(\sqrt{\Delta})` defined
+    over the rationals, and that *rm* must be the matrix of the action of
+    `\sqrt{\Delta}` on the canonical basis of differential forms `(x dx/y,
+    dx/y)` on the curve.
+
+    ALGORITHM: proceed as in :func:`acb_ppav_g2_Q_set_curve` and fill in the
+    *rm* field.
+
+.. function:: int acb_ppav_g2_Q_is_jac(const acb_ppav_g2_Q_t A)
+
+    Returns true iff *A* is a Jacobian.
+
+.. function:: int acb_ppav_g2_Q_is_split(const acb_ppav_g2_Q_t A)
+
+    Returns true iff *A* is the product of two elliptic curves over
+    `\mathbb{Q}`.
+
+.. function:: int acb_ppav_g2_Q_is_weil(const acb_ppav_g2_Q_t A)
+
+    Returns true iff *A* is the Weil restriction of an elliptic curve over a
+    quadratic extension.
+
+.. function:: slong acb_ppav_g2_Q_has_rm(const acb_ppav_g2_Q_t A)
+
+    Returns positive iff *A* has (known) real multiplication by the full ring
+    of integers in a real quadratic field. In that case the return value is the
+    discriminant of the RM field. Otherwise returns 0.
+
+.. function:: void acb_ppav_g2_Q_modular_invariants(const acb_ppav_g2_Q_t A)
+
+    Sets *m* to the modular invariants of *A* (a vector of length 4), as
+    defined in our previous isogeny classes paper.
+
+.. function:: void acb_ppav_g2_Q_igusa_invariants(const acb_ppav_g2_Q_t A)
+
+    Sets *j* to the Igusa invariants of *A* (a vector of length 3). This
+    function throws if *A* is not a Jacobian.
+
+.. function:: void acb_ppav_g2_Q_curve(fmpz_poly_t f, const acb_ppav_g2_Q_t A)
+
+    Sets *f* to an equation of the genus 2 curve whose Jacobian is *A*. This
+    function throws if *A* is not a Jacobian.
+
+.. function:: void acb_ppav_g2_Q_elliptic_factor(ca_poly_t e, const acb_ppav_g2_Q_t A, slong k)
+
+    Sets *e* to one of the two elliptic factors of *A*. If *A* is split, this
+    will be an integral polynomial, otherwise it will be a polynomial defined
+    over a quadratic extension. This function throws if *A* is a Jacobian
+    (i.e. is not geometrically split).
+
+.. function:: void acb_ppav_g2_Q_periods(acb_mat_t tau, const acb_ppav_g2_Q_t A, slong prec)
+
+    Computes a small period matrix of *A* that lies very close to the Siegel
+    fundamental domain. If *A* is a Jacobian, this calls
+    :func:`acb_ppav_g2_periods_highprec` using the precomputed information;
+    otherwise, we compute elliptic curve periods (functions TBD).
+
+.. function:: void acb_ppav_g2_Q_periods_big(acb_mat_t pi, const acb_ppav_g2_Q_t A, slong prec)
+
+    Computes a big period matrix of *A* corresponding to its canonical basis of
+    differential forms; the homology basis is chosen so that the attached small
+    period matrix lies in or very close to the Siegel fundamental domain.
+
+    In the genus 2 case, this will mostly be a repetition of
+    :func:`acb_ppav_g2_periods_big_ca`. Maybe keep just one of them?
+
+.. function:: void acb_ppav_g2_Q_periods_rm(acb_ptr t, const acb_ppav_g2_Q_t A, slong prec)
+
+    In the genus 2 case, this will mostly be a repetition of
+    :func:`acb_ppav_g2_periods_rm_ca`. Maybe keep just one of them?
+
+Hecke operators
+-------------------------------------------------------------------------------
+
+.. function:: acb_ppav_g2_siegel_coset_nb(slong ell)
+
+    Returns the number of cosets for the Hecke operator `T(\ell)` for PPAV's of
+    dimension 2, which is `(\ell^4 - 1)/(\ell - 1)`.
+
+.. function:: acb_ppav_g2_siegel_2step_coset_nb(slong ell)
+
+    Returns the number of cosets for the Hecke operator `T_1(\ell^2)` for
+    PPAV's of dimension 2, which is `\ell (\ell^4 - 1)/(\ell - 1)`.
+
+.. function:: acb_ppav_g2_hilbert_coset_nb(const nf_elem_t beta, slong q)
+
+    In this function, `\beta` denotes a totally positive algebraic integer in a
+    real quadratic field `K` such that the ideal `(\beta)` decomposes as
+    `\mathfrak{q}\mathfrak{c}^2`, where `\mathfrak{q}` is a product of split
+    primes in `K` of total norm *q* that is not divisible by any integer `N >
+    1`, and `\mathfrak{c}` has norm coprime to *q*. Note that the ideals
+    `\mathfrak{q}` and `\mathfrak{c}` are determined uniquely from the input
+    data. We are then interested in the Hecke operator which, to a PPAV `A` of
+    dimension 2 with RM by `\mathbb{Z}_K`, associates the quotients `A/G`,
+    where `G = A[\mathfrak{c}]\oplus H` and `H` is a maximal isotropic subgroup
+    in `A[\mathfrak{q}]` (we could take it to be cyclic, but that would be a
+    slightly different Hecke operator). Call this Hecke operator `T(\beta,
+    q)`. These Hecke operators will allow us to span the isogeny class of those
+    abelian surfaces; see the Arxiv note "Spanning isogeny classes of
+    principally polarized abelian surfaces with RM".
+
+    Then this function returns the number of cosets for the Hecke operator
+    `T(\beta, q)`.
+
+    ALGORITHM: count the number of possible elements that
+    :func:`acb_ppav_g2_hilbert_coset` can return!
+
+.. function:: void acb_ppav_g2_siegel_coset(fmpz_mat_t mat, slong k, slong ell)
+
+    Sets *mat* to the matrix encoding the coset number *k* for the Hecke
+    operator `T(\ell)` for PPAV's of dimension 2.
+
+    The relevant HDME code is in hdme/hecke/siegel_coset.c.
+
+.. function:: void acb_ppav_g2_siegel_2step_coset(fmpz_mat_t mat, slong k, slong ell)
+
+    Sets *mat* to the matrix encoding the coset number *k* for the Hecke
+    operator `T_1(\ell^2)` for PPAV's of dimension 2.
+
+    The relevant HDME code is in hdme/hecke/siegel_T1_coset.c.
+
+.. function:: void acb_ppav_g2_hilbert_coset(fmpz_mat_t mat, slong k, const nf_elem_t beta, slong q)
+
+    Sets *mat* to the matrix encoding the coset number *k* for the Hecke
+    operator `T(\beta, q)` defined as in
+    :func:`acb_ppav_g2_hilbert_coset_nb`.
+
+    ALGORITHM: Factor *q* as a product of primes `\ell_1\cdots \ell_r`. This
+    corresponds to the decomposition of `\mathfrak{q}` as a product of prime
+    ideals. Then the isogeny `A\to A/H` (ignoring polarizations) can be written
+    as a composition of cyclic isogenies of degrees `\ell_i`. So we should
+    obtain all the possible cosets by multiplying the "usual" cosets for the
+    Hecke operator `T(\ell_i)` in the elliptic curves case. (Figure out the
+    math in the paper...)
+
+    The relevant HDME code (in the prime case) is in
+    hdme/hecke/hilbert_coset.c.
+
+Isogenous abelian varieties
+-------------------------------------------------------------------------------
+
+.. function:: slong acb_ppav_g2_Q_siegel_isog(acb_ppav_g2_Q_struct ** B, const acb_ppav_g2_Q_t A, slong ell)
+
+    Sets **B* to the list of all PPAV's of genus 2 over Q that are 1-step
+    `\ell`-isogenous to *A*, and return the number of such abelian
+    varieties. The return value is the number of such abelian varieties. The
+    vector **B* will have to be freed by the user.
+
+    ALGORITHM: this is as in our previous paper.
+    1. Compute a period matrix at low precision (this should already have been
+       done when setting the *A* structure),
+    2. Compute the correct cofactor to use in Hecke enumeration (say from the
+       determinant of the `r` part of the big period matrix),
+    3. Enumerate the modular invariants of all Hecke images using
+       :func:`acb_ppav_g2_siegel_coset` and :func:`acb_theta_g2_even_weight`
+       and normalize them, compute an upper bound on the absolute value of
+       their product. Figure out which of them could possibly be integral after
+       increasing the working precision if necessary.
+    4. If none are integral, exit with an empty B;
+    5. Pick a higher precision that depends on the product of norms computed in
+       step 3; refine the period matrix and recompute the remaining modular
+       invariants in step 3 to this much higher precision; conclude that the
+       corresponding abelian varieties are indeed defined over Q;
+    6. (This is a new step compared to our previous paper) Compute the
+       normalized curve equations associated to the isogenous periods. They
+       should be rational at the very least, and perhaps we can show they have
+       integral coefficients too if properly normalized. If that doesn't work,
+       we'll still have reconstructed rational curves with the correct
+       invariants, so we can skip Mestre, but we'll need to check that we
+       indeed have the correct twist.  Also take into account the fact that we
+       might find products of elliptic curves and/or Weil restrictions.
+    7. Set the corresponding entries of **B*. Here it's a bit of a waste to
+       recompute the periods information since we already have them, but it's
+       going to be much less expensive than the rest anyway.
+
+    The relevant HDME code can be found in hdme/hecke/hecke_collect_siegel.c,
+    hdme/hecke/hecke_normalize_entry.c, hdme/hecke/hecke_make_integral.c,
+    hdme/hecke/hecke_has_integral_precision.c,
+    hdme/hecke/hecke_integral_highprec.c, hdme/hecke/hecke_all_isog_Q.c, and
+    hdme/modular/siegel_direct_isog_Q.c (we can probably avoid the loop there.)
+
+    It might be worth it to mutualize some of these functions with the 2step
+    and Hilbert cases, but I'm not sure how exactly at this point. Maybe
+    writing the same code three times isn't horrible?
+
+.. function:: slong acb_ppav_g2_Q_siegel_2step_isog(acb_ppav_g2_Q_struct ** B, const acb_ppav_g2_Q_t A, slong ell);
+
+    Same as :func:`acb_ppav_g2_Q_siegel_isog` but in the 2-step case.
+
+    The relevant HDME code can be found in hdme/hecke/hecke_collect_T1.c, other
+    hecke files as in :func:`acb_ppav_g2_Q_siegel_isog`, and
+    hdme/modular/siegel_2step_direct_isog_Q.c
+
+.. function:: slong acb_ppav_g2_Q_hilbert_isog(acb_ppav_g2_Q_struct ** B, const acb_ppav_g2_Q_t A, const nf_elem_t beta, slong q, slong hmf_cofactor)
+
+    Same as :func:`acb_ppav_g2_Q_siegel_isog` but in the RM case. We will need
+    some information about the corresponding graded algebra of Hilbert modular
+    forms, say an integer `M` with the following property: for any even `2\leq
+    k\leq D` where `D` is known (depends on `\beta`), if `g` is a HMF with
+    integral Fourier coefficients, then `M^k g` is an integral polynomial in
+    terms of the pullbacks of modular invariants to the Hilbert surface. This
+    integer *M* will be an input to this function as *hmf_cofactor*. Another
+    issue is that the pullbacks of modular invariants will only generate the
+    symmetric Hilbert modular forms, so we might have to process a given
+    `\beta` and its conjugate simultaneously.
+
+    Some relevant HDME code can be found in hdme/hecke/hecke_collect_hilbert.c
+    and hdme/hecke/hecke_collect_hilbert_sym.c but the correct rescaling in the
+    Hilbert case wasn't worked out there.
 
