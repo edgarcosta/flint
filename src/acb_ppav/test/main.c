@@ -34,6 +34,7 @@ test_struct tests[] =
     TEST_FUNCTION(acb_ppav_periods_from_theta2_scalar),
     TEST_FUNCTION(acb_ppav_periods_from_theta2_invalid),
     TEST_FUNCTION(acb_ppav_periods_from_theta2_boundary),
+    TEST_FUNCTION(acb_ppav_periods_from_theta2_escalation),
     TEST_FUNCTION(acb_ppav_periods_overlap_sp4),
     TEST_FUNCTION(acb_ppav_g2_siegel_coset_nb),
     TEST_FUNCTION(acb_ppav_theta_naive_ref),

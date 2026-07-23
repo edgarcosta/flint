@@ -557,3 +557,164 @@ TEST_FUNCTION_START(acb_ppav_periods_from_theta2_boundary, state)
 
     TEST_FUNCTION_END(state);
 }
+
+/* Dump the recorded per-precision escalation outcomes. Called only on a failure
+   path (a passing run stays silent per FLINT convention); rel accuracy is shown
+   only for a code-1 rung, where res is fully assembled. codes[i] < 0 marks a
+   rung the ladder did not reach before failing. */
+static void
+_escalation_report(const slong * precs, const int * codes,
+    const slong * acc00, const slong * acc11, slong n)
+{
+    slong i;
+    flint_printf("escalation outcomes:");
+    for (i = 0; i < n; i++)
+    {
+        if (codes[i] < 0)
+            flint_printf(" %wd:-", precs[i]);
+        else if (codes[i] == 1)
+            flint_printf(" %wd:1(acc %wd,%wd)", precs[i], acc00[i], acc11[i]);
+        else
+            flint_printf(" %wd:%d", precs[i], codes[i]);
+    }
+    flint_printf("\n");
+}
+
+/* Precision-escalation soundness and convergence on the shared deterministic
+   fixture _ppav_test_tau0. The fixture is exact and reduced, so it is a valid
+   theta^2 input at every precision; the return contract is exercised as the
+   working precision climbs the ladder {24, 48, 96, 192, 384}.
+
+   The whole pipeline runs at each precision: th2 is recomputed with
+   acb_theta_all at that precision, since feeding a fixed high-precision th2 to a
+   low-precision inverse would test a different question. At each rung:
+
+     - code 0 is always a hard failure: the input is valid at every precision, so
+       0 (certainly invalid) is never correct here.
+     - code 1 must be SOUND in the res encoding (see _ppav_test_tau0): res00
+       contains tau0_00, res11 contains tau0_11, res01 contains tau0_01^2. The
+       square is exact at 512 bits because tau0_01 is a dyadic point, so the
+       target carries radius 0 and acb_contains is the right predicate. A code-1
+       ball that misses the truth is a wrong tight answer, the worst outcome, and
+       must fail loudly.
+     - code 2 is an honest "insufficient precision" and is acceptable at low
+       precision; it is recorded and the ladder continues.
+
+   Two end conditions. EVENTUAL SUCCESS: the top precision (384) must return 1,
+   so a perpetual-2 implementation fails this test. CONVERGENCE: at the top
+   precision the two diagonal entries each keep at least prec - 30 relative bits.
+   No per-step radius monotonicity is asserted across the ladder: step count,
+   beta, and the internal ellipsoid can change with precision, so a wider ball at
+   a higher precision is not a bug, and only the top-precision accuracy is
+   pinned. Per-precision outcomes are recorded and printed only on a failure
+   path. */
+TEST_FUNCTION_START(acb_ppav_periods_from_theta2_escalation, state)
+{
+    const slong nprecs = 5;
+    const slong precs[5] = {24, 48, 96, 192, 384};
+    const slong toprec = 384;
+    int codes[5];
+    slong acc00[5], acc11[5];
+    slong pi;
+    acb_mat_t tau0;
+    acb_t truth01;
+
+    acb_mat_init(tau0, 2, 2);
+    acb_init(truth01);
+
+    for (pi = 0; pi < nprecs; pi++)
+    {
+        codes[pi] = -1;
+        acc00[pi] = 0;
+        acc11[pi] = 0;
+    }
+
+    _ppav_test_tau0(tau0);
+
+    /* precondition: the fixture is -20-reduced. tau0 is exact, so certifying it
+       once at high precision covers every rung of the ladder. */
+    if (!acb_siegel_is_reduced(tau0, -20, 512))
+        TEST_FUNCTION_FAIL("fixture tau0 is not -20-reduced\n");
+
+    /* res01 target: tau0_01 is a dyadic point, so its square is exact at 512 bits */
+    acb_sqr(truth01, acb_mat_entry(tau0, 0, 1), 512);
+
+    for (pi = 0; pi < nprecs; pi++)
+    {
+        slong prec = precs[pi];
+        acb_mat_t res;
+        acb_ptr th2, z;
+        int code;
+
+        acb_mat_init(res, 2, 2);
+        th2 = _acb_vec_init(16);
+        z = _acb_vec_init(2);
+
+        /* run the whole pipeline at this precision */
+        acb_theta_all(th2, z, tau0, 1, prec);
+        code = acb_ppav_periods_from_theta2(res, th2, 2, prec);
+
+        codes[pi] = code;
+        acc00[pi] = acb_rel_accuracy_bits(acb_mat_entry(res, 0, 0));
+        acc11[pi] = acb_rel_accuracy_bits(acb_mat_entry(res, 1, 1));
+
+        /* the fixture is valid, so a certainly-invalid verdict is a bug */
+        if (code == 0)
+        {
+            _escalation_report(precs, codes, acc00, acc11, nprecs);
+            TEST_FUNCTION_FAIL("prec %wd: valid fixture got code 0\n", prec);
+        }
+
+        /* soundness: a code-1 ball must contain the truth in the res encoding */
+        if (code == 1)
+        {
+            if (!acb_contains(acb_mat_entry(res, 0, 0), acb_mat_entry(tau0, 0, 0)))
+            {
+                _escalation_report(precs, codes, acc00, acc11, nprecs);
+                TEST_FUNCTION_FAIL("prec %wd: res00 does not contain tau0_00\n", prec);
+            }
+            if (!acb_contains(acb_mat_entry(res, 1, 1), acb_mat_entry(tau0, 1, 1)))
+            {
+                _escalation_report(precs, codes, acc00, acc11, nprecs);
+                TEST_FUNCTION_FAIL("prec %wd: res11 does not contain tau0_11\n", prec);
+            }
+            if (!acb_contains(acb_mat_entry(res, 0, 1), truth01))
+            {
+                _escalation_report(precs, codes, acc00, acc11, nprecs);
+                TEST_FUNCTION_FAIL("prec %wd: res01 does not contain tau0_01^2\n", prec);
+            }
+        }
+        /* code == 2: honest insufficient precision, escalate */
+
+        _acb_vec_clear(th2, 16);
+        _acb_vec_clear(z, 2);
+        acb_mat_clear(res);
+    }
+
+    /* eventual success: the ladder must terminate in a certified 1 at the top */
+    if (codes[nprecs - 1] != 1)
+    {
+        _escalation_report(precs, codes, acc00, acc11, nprecs);
+        TEST_FUNCTION_FAIL("top prec %wd: got code %d, expected eventual 1\n",
+            toprec, codes[nprecs - 1]);
+    }
+
+    /* convergence: the top-precision diagonal keeps at least prec - 30 rel bits */
+    if (acc00[nprecs - 1] < toprec - 30)
+    {
+        _escalation_report(precs, codes, acc00, acc11, nprecs);
+        TEST_FUNCTION_FAIL("top prec %wd: res00 rel accuracy %wd < %wd\n",
+            toprec, acc00[nprecs - 1], toprec - 30);
+    }
+    if (acc11[nprecs - 1] < toprec - 30)
+    {
+        _escalation_report(precs, codes, acc00, acc11, nprecs);
+        TEST_FUNCTION_FAIL("top prec %wd: res11 rel accuracy %wd < %wd\n",
+            toprec, acc11[nprecs - 1], toprec - 30);
+    }
+
+    acb_clear(truth01);
+    acb_mat_clear(tau0);
+
+    TEST_FUNCTION_END(state);
+}
