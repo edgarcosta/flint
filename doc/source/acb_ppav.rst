@@ -81,12 +81,12 @@ The AGM method for periods from theta functions in dimensions 1 and 2
     low-precision approximation of `\delta` as in
     :func:`acb_ppav_agm_max_diff`. Continue until `\delta` is of the order of
     `2^{-\mathrm{prec}}` or of the order of the current error bounds on the
-    vector entries. If `\delta` is small enough, say less than 1/8, we obtain
+    vector entries. If `\delta` is small enough, say less than 1/7, we obtain
     an enclosure of the AGM value through Proposition 7.1 in Dupont's PhD
-    thesis (with k=0), after rescaling by `e^{2\pi i \beta}` Otherwise, we can
-    set *r* to a big complex disc centered in 0, since in any case we know that
-    the absolute value of the AGM is bounded above by the `L^\infty` norm of
-    *a*. (By Dupont, Lemme 7.2, Lemme 7.3 and Lemme 7.4, we know that there
+    thesis (with k=0), after rescaling by `e^{2\pi i \beta}` Otherwise we
+    return 2 (the working precision is probably insufficient) and leave *r*
+    undefined; a return of 1 always carries a certified enclosure.
+    (By Dupont, Lemme 7.2, Lemme 7.3 and Lemme 7.4, we know that there
     exists an absolute upper bound, depending on *eps*, on how many steps we
     need to reach the quadratic convergence regime and the number of steps
     after that, but we do not need to compute these bounds.)
