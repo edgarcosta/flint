@@ -15,12 +15,14 @@
 #include "acb_ppav.h"
 
 #include "t-siegel_coset_nb.c"
+#include "t-theta_naive_ref.c"
 
 /* Array of test functions ***************************************************/
 
 test_struct tests[] =
 {
     TEST_FUNCTION(acb_ppav_g2_siegel_coset_nb),
+    TEST_FUNCTION(acb_ppav_theta_naive_ref),
 };
 
 /* main function *************************************************************/
