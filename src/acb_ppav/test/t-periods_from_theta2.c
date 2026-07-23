@@ -16,6 +16,27 @@
 #include "acb_theta.h"
 #include "acb_ppav.h"
 
+/* Shared deterministic fixture (used by the regression test below and by
+   Task 12): a fixed, concrete, asymmetric reduced tau0. Asymmetric means
+   tau11 != tau22 and tau12 != 0, so a tau11 <-> tau22 coordinate swap cannot
+   hide: such a swap is P tau P^T, which leaves tau12^2 (the (0,1) output)
+   unchanged, and equal diagonals would make the swap invisible in the direct
+   entrywise checks. The midpoints are the exact doubles below (arb_set_d is
+   exact on a dyadic double, radius 0), so acb_contains, not acb_overlaps, is
+   the right predicate for the reconstruction. Callers assert
+   acb_siegel_is_reduced on this matrix. */
+static void
+_ppav_test_tau0(acb_mat_t tau)
+{
+    arb_set_d(acb_realref(acb_mat_entry(tau, 0, 0)), 0.1);
+    arb_set_d(acb_imagref(acb_mat_entry(tau, 0, 0)), 1.1);
+    arb_set_d(acb_realref(acb_mat_entry(tau, 1, 1)), -0.15);
+    arb_set_d(acb_imagref(acb_mat_entry(tau, 1, 1)), 1.4);
+    arb_set_d(acb_realref(acb_mat_entry(tau, 0, 1)), 0.2);
+    arb_set_d(acb_imagref(acb_mat_entry(tau, 0, 1)), 0.1);
+    acb_set(acb_mat_entry(tau, 1, 0), acb_mat_entry(tau, 0, 1));
+}
+
 /* Round-trip test. From a random reduced tau, forward-evaluate the 16 squared
    theta constants with acb_theta_all (sqr = 1), invert with
    acb_ppav_periods_from_theta2, and check we recover
@@ -166,6 +187,87 @@ next:
     if (nacc < accmin)
         TEST_FUNCTION_FAIL("only %wd/%wd accuracy-exercised round-trips\n",
             nacc, accmin);
+
+    TEST_FUNCTION_END(state);
+}
+
+/* Deterministic regression on the single fixed asymmetric reduced fixture
+   _ppav_test_tau0 (no randomness). Because the fixture midpoints are exact and
+   the fixture is reduced and well conditioned by construction, every check is
+   unconditional: the inverse must return 1, each output entry must CONTAIN the
+   exact input entry (res00 ~ tau11, res11 ~ tau22, res01 ~ tau12^2), the two
+   diagonal entries must keep at least prec - 30 relative bits (no gating), and
+   the rebuilt matrix must be Sp(4,Z)-equivalent to tau0. The asymmetry is what
+   gives the entrywise checks teeth: swapping the two diagonal assertions
+   (res00 vs tau22) fails, since tau11 != tau22 and the up-to-Sp(4,Z) check is
+   blind to the swap. */
+TEST_FUNCTION_START(acb_ppav_periods_from_theta2_regression, state)
+{
+    slong prec = 300;
+    acb_mat_t tau0, res, tb;
+    acb_ptr th2, z;
+    acb_t t12sq, w;
+    int code;
+
+    acb_mat_init(tau0, 2, 2);
+    acb_mat_init(res, 2, 2);
+    acb_mat_init(tb, 2, 2);
+    th2 = _acb_vec_init(16);
+    z = _acb_vec_init(2);
+    acb_init(t12sq);
+    acb_init(w);
+
+    _ppav_test_tau0(tau0);
+
+    /* self-validating fixture: the precondition is that tau0 is -20-reduced */
+    if (!acb_siegel_is_reduced(tau0, -20, prec))
+        TEST_FUNCTION_FAIL("fixture tau0 is not -20-reduced\n");
+
+    /* forward: the 16 squared theta constants at z = 0 */
+    acb_theta_all(th2, z, tau0, 1, prec);
+
+    /* inverse: a reduced, well-conditioned input must return 1 */
+    code = acb_ppav_periods_from_theta2(res, th2, 2, prec);
+    if (code != 1)
+        TEST_FUNCTION_FAIL("periods_from_theta2 returned %d, expected 1\n", code);
+
+    /* direct entrywise containment (tau0 entries are exact points, radius 0) */
+    if (!acb_contains(acb_mat_entry(res, 0, 0), acb_mat_entry(tau0, 0, 0)))
+        TEST_FUNCTION_FAIL("res00 does not contain tau0_00\n");
+    if (!acb_contains(acb_mat_entry(res, 1, 1), acb_mat_entry(tau0, 1, 1)))
+        TEST_FUNCTION_FAIL("res11 does not contain tau0_11\n");
+    /* tau0_01 is a dyadic point, so its square is exact at this precision */
+    acb_sqr(t12sq, acb_mat_entry(tau0, 0, 1), prec);
+    if (!acb_contains(acb_mat_entry(res, 0, 1), t12sq))
+        TEST_FUNCTION_FAIL("res01 does not contain tau0_01^2\n");
+
+    /* unconditional relative accuracy: the fixture is well conditioned */
+    if (acb_rel_accuracy_bits(acb_mat_entry(res, 0, 0)) < prec - 30)
+        TEST_FUNCTION_FAIL("res00 lost bits (%wd)\n",
+            acb_rel_accuracy_bits(acb_mat_entry(res, 0, 0)));
+    if (acb_rel_accuracy_bits(acb_mat_entry(res, 1, 1)) < prec - 30)
+        TEST_FUNCTION_FAIL("res11 lost bits (%wd)\n",
+            acb_rel_accuracy_bits(acb_mat_entry(res, 1, 1)));
+
+    /* equivalence up to Sp(4,Z) on the rebuilt matrix; tau0_12 has positive
+       imaginary part, so the Im >= 0 root of res01 recovers it */
+    acb_set(acb_mat_entry(tb, 0, 0), acb_mat_entry(res, 0, 0));
+    acb_set(acb_mat_entry(tb, 1, 1), acb_mat_entry(res, 1, 1));
+    acb_sqrt(w, acb_mat_entry(res, 0, 1), prec);
+    if (arf_sgn(arb_midref(acb_imagref(w))) < 0)
+        acb_neg(w, w);
+    acb_set(acb_mat_entry(tb, 0, 1), w);
+    acb_set(acb_mat_entry(tb, 1, 0), w);
+    if (!_acb_ppav_periods_overlap_sp4(tb, tau0, prec))
+        TEST_FUNCTION_FAIL("rebuilt tau not Sp(4,Z)-equivalent to tau0\n");
+
+    acb_clear(t12sq);
+    acb_clear(w);
+    _acb_vec_clear(th2, 16);
+    _acb_vec_clear(z, 2);
+    acb_mat_clear(tau0);
+    acb_mat_clear(res);
+    acb_mat_clear(tb);
 
     TEST_FUNCTION_END(state);
 }
