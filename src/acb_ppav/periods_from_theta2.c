@@ -153,7 +153,7 @@ acb_ppav_periods_from_theta2(acb_mat_t res, acb_srcptr th, slong g, slong prec)
     acb_mat_t tau;
     acb_t w, lhs, rhs;
     arb_mat_t Y, L;
-    int ret, code, compat, red, pd;
+    int ret, code, compat, red, pd, sawzero, sawtwo;
 
     FLINT_ASSERT(g == 2);
 
@@ -173,19 +173,33 @@ acb_ppav_periods_from_theta2(acb_mat_t res, acb_srcptr th, slong g, slong prec)
     arb_mat_init(L, 2, 2);
 
     ret = 2;
+    sawzero = 0;
+    sawtwo = 0;
 
-    /* Four Borchardt means. acb_ppav_agm's 0 (certainly invalid start) and 2
-       (undecidable) propagate unchanged. */
+    /* Four Borchardt means. Mirror HDME theta2_invalid: a single sequence that is
+       certainly invalid (acb_ppav_agm returns 0) makes the whole input certainly
+       invalid, even if another sequence is merely undecidable (2). So run all
+       four sequences and let a certain 0 win over any 2, rather than stopping at
+       the first non-1. */
     for (i = 0; i < 4; i++)
     {
         for (j = 0; j < 4; j++)
             acb_set(&seq[j], &th[SEQ[i][j]]);
         code = acb_ppav_agm(&means[i], seq, eps, 2, wp);
-        if (code != 1)
-        {
-            ret = code;
-            goto cleanup;
-        }
+        if (code == 0)
+            sawzero = 1;
+        else if (code != 1)
+            sawtwo = 1;
+    }
+    if (sawzero)
+    {
+        ret = 0;
+        goto cleanup;
+    }
+    if (sawtwo)
+    {
+        ret = 2;
+        goto cleanup;
     }
 
     /* Assemble r = [[i m0/m1, m0/m3 + tau11 tau22], [., i m0/m2]]. */
@@ -204,11 +218,15 @@ acb_ppav_periods_from_theta2(acb_mat_t res, acb_srcptr th, slong g, slong prec)
         goto cleanup;
     }
 
-    /* tau for the recheck: tau12 is a square root of res01 = tau12^2. theta^2
-       is invariant under tau12 -> -tau12 (each theta_{a,b} only picks up
-       (-1)^{a1 b1}), so the sign is immaterial to the projective comparison; we
-       take Im(tau12) >= 0 so a genuinely reduced input stays reduced. Choosing a
-       representative by the midpoint is not a certified 0/1/2 decision. */
+    /* tau for the recheck: tau12 is a square root of res01 = tau12^2. theta^2 is
+       invariant under tau12 -> -tau12 (each theta_{a,b} only picks up
+       (-1)^{a1 b1}), so the sign is immaterial to the projective comparison. We
+       take Im(tau12) >= 0, the Minkowski y12 >= 0 convention for a reduced tau,
+       so a genuinely reduced input stays reduced. This midpoint sign choice is
+       not a certified 0/1/2 decision: the verdicts below are all certified
+       (acb_overlaps, acb_siegel_is_reduced, acb_mat_is_finite). A tau12 whose
+       imaginary part straddles zero can only pick a sign that fails is_reduced
+       certification, honestly yielding 2 (retry higher), never an unsound 1. */
     acb_set(acb_mat_entry(tau, 0, 0), acb_mat_entry(res, 0, 0));
     acb_set(acb_mat_entry(tau, 1, 1), acb_mat_entry(res, 1, 1));
     acb_sqrt(w, acb_mat_entry(res, 0, 1), wp);

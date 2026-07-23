@@ -156,9 +156,17 @@ _agm_hp_cover(const arf_struct * noS, const arf_struct * noLen,
     slong ncp = 0, i, j, k;
     int covered = 1;
 
+    /* A single no-arc covers the whole circle only if it strictly wraps past its
+       own start. The arc is OPEN (both _agm_hp_point_covered comparisons are
+       strict), and noLen = 1 - (ubound(base+cc) - lbound(base-cc)) <= 1 always,
+       reaching exactly 1 only when base and cc collapse to exact points with
+       cc = arccos(eps)/(2pi) = 0, i.e. eps = 1 (the rst allows any eps > 0). At
+       noLen == 1 the open arc is S^1 minus its shared endpoint noS and does NOT
+       cover; the strict > 1 defers that case to the endpoint/midpoint scan below,
+       which reports noS uncovered, giving a conservative 2 instead of a false 0. */
     for (j = 0; j < n; j++)
-        if (has_no[j] && arf_cmp_si(&noLen[j], 1) >= 0)
-            return 1;   /* a full-circle arc covers by itself */
+        if (has_no[j] && arf_cmp_si(&noLen[j], 1) > 0)
+            return 1;   /* a strictly-wrapping arc covers by itself */
 
     cp = _arf_vec_init(2 * n);
     for (j = 0; j < n; j++)

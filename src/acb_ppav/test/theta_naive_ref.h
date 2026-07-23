@@ -75,6 +75,17 @@ _acb_ppav_naive_theta2_ab(acb_t out, const int a[2], const int b[2],
         arb_clear(tr); arb_clear(det); arb_clear(disc);
     }
 
+    /* If Im(tau) is (near) degenerate the lower bound on lambda may be
+       nonpositive, and the geometric tail below divides by 1 - exp(-pi lambda)
+       <= 0. Bail out with a whole-plane enclosure, sound on any tau. */
+    if (!arb_is_positive(lambda))
+    {
+        acb_indeterminate(out);
+        arb_clear(lambda); arb_clear(tail);
+        acb_clear(th); acb_clear(term); acb_clear(quad); acb_clear(pii);
+        return;
+    }
+
     /* Choose N so that tail < 2^{-prec-8}, doubling with a safety cap. If the
        cap is hit the (possibly large) tail is still added honestly below. */
     N = 4;

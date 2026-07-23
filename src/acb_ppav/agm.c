@@ -30,6 +30,15 @@
       division by 2^g, which reproduces the classical ((x+y)/2, sqrt(xy)) step
       including the 2^g normalization (acb_theta.rst duplication formula).
 
+   3. The common magnitude is normalized to [1/2, 1) by an exact power of two
+      2^{-e} (e the base-2 exponent of max_j |b_j|) right after the beta
+      rotation, and the returned enclosure is scaled back by 2^{e} at the end.
+      AGM is homogeneous of degree 1, so this is mathematically transparent. It
+      pins M0 ~ 1 so the after-quad-conv count ceil(log2(log2(M0/7)+prec+1)) is
+      always well-posed (log2 of a positive ball) and the absolute residual
+      widening 2^{-prec} becomes relative to the true magnitude. HDME instead
+      divides through by b[0] to the same effect.
+
    Ported constants, with provenance:
      - quad-convergence threshold delta < 1/7
        (borchardt_mean_quad_conv_is_reached.c: |a_i - a_0| < |a_0|/7);
@@ -249,6 +258,29 @@ _agm_rescale(acb_ptr b, acb_t tib, acb_srcptr a, const arf_t beta, slong n,
     acb_clear(scal);
 }
 
+/* Base-2 exponent e such that max_j |b_j| lies in [2^{e-1}, 2^e); 0 if the
+   vector is degenerate (some entry non-finite, or all entries zero). Scaling by
+   2^{-e} is exact and pins the common magnitude into [1/2, 1). */
+static slong
+_agm_norm_exp(acb_srcptr b, slong n, slong prec)
+{
+    arf_t hi, t;
+    slong i, e;
+
+    arf_init(hi);
+    arf_init(t);
+    arf_zero(hi);
+    for (i = 0; i < n; i++)
+    {
+        acb_get_abs_ubound_arf(t, &b[i], prec);
+        arf_max(hi, hi, t);
+    }
+    e = arf_is_special(hi) ? 0 : arf_abs_bound_lt_2exp_si(hi);
+    arf_clear(hi);
+    arf_clear(t);
+    return e;
+}
+
 int
 acb_ppav_agm(acb_ptr r, acb_srcptr a, const arf_t eps, slong g, slong prec)
 {
@@ -257,7 +289,7 @@ acb_ppav_agm(acb_ptr r, acb_srcptr a, const arf_t eps, slong g, slong prec)
     acb_t tib, scal;
     acb_ptr b;
     fmpz_t nb_before, nb_after;
-    slong wp, pp, i, cap, na;
+    slong wp, pp, i, cap, na, e;
     int hp, reached, ret;
 
     arf_init(beta);
@@ -282,6 +314,11 @@ acb_ppav_agm(acb_ptr r, acb_srcptr a, const arf_t eps, slong g, slong prec)
        rounding loss so the final enclosure keeps ~prec relative bits. */
     pp = prec + 32;
     _agm_rescale(b, tib, a, beta, n, pp);
+    /* Exact magnitude normalization (see the header comment, adaptation 3): pin
+       max_j |b_j| into [1/2, 1) by 2^{-e}, keeping the step-count logarithms
+       well-posed; undone by acb_mul_2exp_si(r, r, e) at the very end. */
+    e = _agm_norm_exp(b, n, pp);
+    _acb_vec_scalar_mul_2exp_si(b, b, n, -e);
     if (!_agm_nb_before(nb_before, b, g, pp))
     {
         ret = 2;
@@ -290,8 +327,9 @@ acb_ppav_agm(acb_ptr r, acb_srcptr a, const arf_t eps, slong g, slong prec)
     _agm_nb_after(nb_after, b, g, pp);
     wp = prec + 32 + 4 * (fmpz_get_si(nb_before) + fmpz_get_si(nb_after));
 
-    /* Working pass. */
+    /* Working pass, with the same exact normalization. */
     _agm_rescale(b, tib, a, beta, n, wp);
+    _acb_vec_scalar_mul_2exp_si(b, b, n, -e);
 
     arf_set_si(thr, 1);
     arf_div_si(thr, thr, 7, wp, ARF_RND_DOWN);   /* thr <= 1/7 */
@@ -334,10 +372,13 @@ acb_ppav_agm(acb_ptr r, acb_srcptr a, const arf_t eps, slong g, slong prec)
         }
     }
 
-    /* Certified enclosure of the limit, then rescale back by exp(+2 pi i beta). */
+    /* Certified enclosure of the limit; undo the exact 2^{-e} normalization
+       (scales value and residual together, preserving relative accuracy), then
+       rescale back by exp(+2 pi i beta). */
     acb_set(r, &b[0]);
     arb_add_error_2exp_si(acb_realref(r), -prec);
     arb_add_error_2exp_si(acb_imagref(r), -prec);
+    acb_mul_2exp_si(r, r, e);
     acb_exp(scal, tib, wp);
     acb_mul(r, r, scal, wp);
     ret = 1;
