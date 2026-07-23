@@ -241,13 +241,17 @@ TEST_FUNCTION_START(acb_ppav_periods_from_theta2_regression, state)
     if (!acb_contains(acb_mat_entry(res, 0, 1), t12sq))
         TEST_FUNCTION_FAIL("res01 does not contain tau0_01^2\n");
 
-    /* unconditional relative accuracy: the fixture is well conditioned */
+    /* unconditional relative accuracy: the fixture is well conditioned, and
+       tau12 != 0 so res01 = tau12^2 has well-defined relative accuracy */
     if (acb_rel_accuracy_bits(acb_mat_entry(res, 0, 0)) < prec - 30)
         TEST_FUNCTION_FAIL("res00 lost bits (%wd)\n",
             acb_rel_accuracy_bits(acb_mat_entry(res, 0, 0)));
     if (acb_rel_accuracy_bits(acb_mat_entry(res, 1, 1)) < prec - 30)
         TEST_FUNCTION_FAIL("res11 lost bits (%wd)\n",
             acb_rel_accuracy_bits(acb_mat_entry(res, 1, 1)));
+    if (acb_rel_accuracy_bits(acb_mat_entry(res, 0, 1)) < prec - 30)
+        TEST_FUNCTION_FAIL("res01 lost bits (%wd)\n",
+            acb_rel_accuracy_bits(acb_mat_entry(res, 0, 1)));
 
     /* equivalence up to Sp(4,Z) on the rebuilt matrix; tau0_12 has positive
        imaginary part, so the Im >= 0 root of res01 recovers it */
@@ -279,23 +283,38 @@ TEST_FUNCTION_START(acb_ppav_periods_from_theta2_regression, state)
    entry, or rechecks the recomputed theta^2 against th absolutely instead of
    projectively, passes every other test and fails only this one.
 
-   From each random reduced, code-1 draw we rescale the whole 16-vector by three
+   From each random reduced, code-1 draw we rescale the whole 16-vector by four
    deliberately awkward scalars and require code 1 with output overlapping the
    unscaled res0 entrywise:
-     s1 = 3.7 e^{1.3 i}  generic magnitude and argument (rules out a real- or
-                         unit-scalar-only normalizer);
-     s2 = 10^6           large real (rules out one keyed to magnitude near 1);
-     s3 = 2^-40          tiny real (guards one that divides by an entry only
-                         when it looks "big").
+     s1 = 3.7 e^{1.3 i}    generic magnitude and argument (rules out a real- or
+                           unit-scalar-only normalizer);
+     s2 = 10^6             large real (rules out one keyed to magnitude near 1);
+     s3 = 2^-40            tiny real (guards one that divides by an entry only
+                           when it looks "big");
+     s4 = 2^-(prec+100)    far below the target precision. The AGM normalizes the
+                           common magnitude by an exact power of two before it
+                           derives its step counts, so the after-quad-conv count
+                           log2(log2(M0/7)+prec+1) stays well-posed and the
+                           residual widening is scale-relative even here. Without
+                           that normalization M0 ~ 2^-(prec+100) sends the inner
+                           log2 nonpositive and the AGM aborts.
    Overlap is guaranteed, not just likely: periods_from_theta2 returns a rigorous
    enclosure of the same mathematical r in every case, so res0 and each res both
-   contain that r. The scalars are exact (s2, s3) or a precise nonzero ball (s1),
-   and none contains zero, so rescaling preserves the certified nonzero magnitudes
-   the AGM and its projective recheck rely on; scaling by an exact power of two
-   keeps the zero/nonzero status of every entry byte for byte. The draw-and-skip
-   discipline matches the round-trip above (skip non -20-reduced draws and honest
-   2-returns; a reduced input returning 0 is a hard failure), and we require a few
-   verified draws so the check is exercised on more than one tau shape. */
+   contain that r. The scalars are exact (s2, s3, s4) or a precise nonzero ball
+   (s1), and none contains zero, so rescaling preserves the certified nonzero
+   magnitudes the AGM and its projective recheck rely on; scaling by an exact
+   power of two keeps the zero/nonzero status of every entry byte for byte. The
+   draw-and-skip discipline matches the round-trip above (skip non -20-reduced
+   draws and honest 2-returns; a reduced input returning 0 is a hard failure), and
+   we require a few verified draws so the check is exercised on more than one tau
+   shape.
+
+   On every scaled call we also require each assembled entry to keep at least
+   prec - 30 relative bits. The entries are scale-free ratios of degree-1
+   Borchardt means, so an exact rescaling of the input cannot degrade them; a
+   scale-dependent accuracy loss (which overlap alone does not see) fails here.
+   res01 = tau12^2 is nonzero on these reduced draws, so its relative accuracy is
+   well-defined. */
 TEST_FUNCTION_START(acb_ppav_periods_from_theta2_scalar, state)
 {
     slong prec = 300;
@@ -355,9 +374,13 @@ TEST_FUNCTION_START(acb_ppav_periods_from_theta2_scalar, state)
             TEST_FUNCTION_FAIL("draw %wd: unscaled reduced input got code %d\n",
                 ndraw, code);
 
-        for (si = 0; si < 3; si++)
+        for (si = 0; si < 4; si++)
         {
-            _acb_vec_scalar_mul(th2s, th2, 16, &s[si], prec);
+            if (si < 3)
+                _acb_vec_scalar_mul(th2s, th2, 16, &s[si], prec);
+            else
+                /* s4 = 2^-(prec+100), applied exactly per entry */
+                _acb_vec_scalar_mul_2exp_si(th2s, th2, 16, -(prec + 100));
             code = acb_ppav_periods_from_theta2(res, th2s, 2, prec);
             if (code != 1)
                 TEST_FUNCTION_FAIL("draw %wd scalar %wd: got code %d, want 1\n",
@@ -367,6 +390,16 @@ TEST_FUNCTION_START(acb_ppav_periods_from_theta2_scalar, state)
                         acb_mat_entry(res0, k / 2, k % 2)))
                     TEST_FUNCTION_FAIL("draw %wd scalar %wd: entry (%wd,%wd) "
                         "does not overlap res0\n", ndraw, si, k / 2, k % 2);
+            /* scale-free ratios: an exact rescaling must not cost accuracy */
+            if (acb_rel_accuracy_bits(acb_mat_entry(res, 0, 0)) < prec - 30)
+                TEST_FUNCTION_FAIL("draw %wd scalar %wd: res00 lost bits (%wd)\n",
+                    ndraw, si, acb_rel_accuracy_bits(acb_mat_entry(res, 0, 0)));
+            if (acb_rel_accuracy_bits(acb_mat_entry(res, 1, 1)) < prec - 30)
+                TEST_FUNCTION_FAIL("draw %wd scalar %wd: res11 lost bits (%wd)\n",
+                    ndraw, si, acb_rel_accuracy_bits(acb_mat_entry(res, 1, 1)));
+            if (acb_rel_accuracy_bits(acb_mat_entry(res, 0, 1)) < prec - 30)
+                TEST_FUNCTION_FAIL("draw %wd scalar %wd: res01 lost bits (%wd)\n",
+                    ndraw, si, acb_rel_accuracy_bits(acb_mat_entry(res, 0, 1)));
         }
 
         nsucc++;
@@ -391,7 +424,7 @@ next:
 
 /* Certain-invalid negative test: periods_from_theta2 must return 0 (certainly
    not a valid theta^2 vector) on decidably invalid input, never 1 and never a
-   hedging 2. Two inputs, both certainly invalid at 300 bits:
+   hedging 2. Three inputs, all certainly invalid at 300 bits:
 
    (1) A valid theta^2 vector for the fixture tau0 with one ODD entry forced
        certainly nonzero. The six odd characteristics k in {5,7,10,11,13,14}
@@ -403,7 +436,16 @@ next:
        it hedges on a decidable mismatch. Both are failures by design.
 
    (2) The coarse all-ones vector: the odd positions are then certainly nonzero
-       too, so again certainly invalid. */
+       too, so again certainly invalid.
+
+   (3) A certain invalidity that lives in a LATER Borchardt sequence than the
+       first undecidable one, exercising the "run all four sequences" path (HDME
+       theta2_invalid). SEQ0 = {th0,th2,th1,th3} = {1, [0+/-1/2], 1, 1} is
+       undecidable (the fat zero kills the certain-yes half-plane and the three
+       1's do not cover), so its AGM returns 2. SEQ1 = {th8,th0,th9,th1} =
+       {-1, 1, 1, 1} certainly leaves every half-plane, so its AGM returns 0.
+       Stopping at the first non-1 sequence would return 2; because a later
+       sequence certifies invalidity, the answer must be 0. */
 TEST_FUNCTION_START(acb_ppav_periods_from_theta2_invalid, state)
 {
     slong prec = 300;
@@ -433,6 +475,21 @@ TEST_FUNCTION_START(acb_ppav_periods_from_theta2_invalid, state)
     if (code != 0)
         TEST_FUNCTION_FAIL("all-ones th2: got code %d, expected 0\n", code);
 
+    /* (3) invalidity in SEQ1 while SEQ0 is only undecidable (2). SEQ0 =
+       {th0,th2,th1,th3} = {1, fat-zero, 1, 1} -> AGM 2; SEQ1 = {th8,th0,th9,th1}
+       = {-1, 1, 1, 1} -> AGM 0. Only reachable by continuing past SEQ0's 2. */
+    for (k = 0; k < 16; k++)
+        acb_zero(&th2[k]);
+    acb_one(&th2[0]);
+    acb_one(&th2[1]);
+    acb_one(&th2[3]);
+    arb_add_error_2exp_si(acb_realref(&th2[2]), -1);   /* th2[2] = [0 +/- 1/2] */
+    acb_set_si(&th2[8], -1);
+    acb_one(&th2[9]);
+    code = acb_ppav_periods_from_theta2(res, th2, 2, prec);
+    if (code != 0)
+        TEST_FUNCTION_FAIL("late-sequence invalid: got code %d, expected 0\n", code);
+
     _acb_vec_clear(th2, 16);
     _acb_vec_clear(z, 2);
     acb_mat_clear(tau0);
@@ -458,6 +515,61 @@ TEST_FUNCTION_START(acb_ppav_periods_from_theta2_boundary, state)
     slong maxdraws = 100;
     slong nsucc = 0, ndraw = 0;
     const slong precs[3] = {300, 600, 1200};
+
+    /* Deterministic 2 -> 1 witness on a single fixed input. tau = diag(96i, 97i)
+       with tau12 = 2^-4 is -20-reduced but has even theta^2 constants small
+       enough (~exp(-96 pi)) that at 300 bits the AGM cannot certify convergence
+       and periods_from_theta2 returns 2; by 600 bits it succeeds with 1. All
+       entries are exact dyadics, so both codes are deterministic. This positively
+       exercises the caller-side 2 -> 1 escalation on one input, which the random
+       ladder below only drives to eventual success in aggregate. Empirically the
+       transition sits near 440 bits, so 300 (solid 2) and 600 (solid 1) both have
+       margin. */
+    {
+        acb_mat_t wtau, wres;
+        acb_ptr wth2, wz;
+        acb_t wt12sq;
+        int wcode;
+
+        acb_mat_init(wtau, 2, 2);
+        acb_mat_init(wres, 2, 2);
+        wth2 = _acb_vec_init(16);
+        wz = _acb_vec_init(2);
+        acb_init(wt12sq);
+
+        arb_set_si(acb_imagref(acb_mat_entry(wtau, 0, 0)), 96);
+        arb_set_si(acb_imagref(acb_mat_entry(wtau, 1, 1)), 97);
+        arb_set_d(acb_realref(acb_mat_entry(wtau, 0, 1)), 0.0625);   /* 2^-4 */
+        acb_set(acb_mat_entry(wtau, 1, 0), acb_mat_entry(wtau, 0, 1));
+
+        if (!acb_siegel_is_reduced(wtau, -20, genprec))
+            TEST_FUNCTION_FAIL("2->1 witness tau is not -20-reduced\n");
+
+        /* 300 bits: honest insufficient precision */
+        acb_theta_all(wth2, wz, wtau, 1, 300);
+        wcode = acb_ppav_periods_from_theta2(wres, wth2, 2, 300);
+        if (wcode != 2)
+            TEST_FUNCTION_FAIL("2->1 witness: expected code 2 at 300, got %d\n", wcode);
+
+        /* 600 bits: certified 1, and sound in the res encoding */
+        acb_theta_all(wth2, wz, wtau, 1, 600);
+        wcode = acb_ppav_periods_from_theta2(wres, wth2, 2, 600);
+        if (wcode != 1)
+            TEST_FUNCTION_FAIL("2->1 witness: expected code 1 at 600, got %d\n", wcode);
+        if (!acb_overlaps(acb_mat_entry(wres, 0, 0), acb_mat_entry(wtau, 0, 0)))
+            TEST_FUNCTION_FAIL("2->1 witness: res00 does not overlap tau00\n");
+        if (!acb_overlaps(acb_mat_entry(wres, 1, 1), acb_mat_entry(wtau, 1, 1)))
+            TEST_FUNCTION_FAIL("2->1 witness: res11 does not overlap tau11\n");
+        acb_sqr(wt12sq, acb_mat_entry(wtau, 0, 1), 600);
+        if (!acb_overlaps(acb_mat_entry(wres, 0, 1), wt12sq))
+            TEST_FUNCTION_FAIL("2->1 witness: res01 does not overlap tau12^2\n");
+
+        acb_clear(wt12sq);
+        _acb_vec_clear(wth2, 16);
+        _acb_vec_clear(wz, 2);
+        acb_mat_clear(wtau);
+        acb_mat_clear(wres);
+    }
 
     while (nsucc < target && ndraw < maxdraws)
     {
@@ -602,7 +714,8 @@ _escalation_report(const slong * precs, const int * codes,
 
    Two end conditions. EVENTUAL SUCCESS: the top precision (384) must return 1,
    so a perpetual-2 implementation fails this test. CONVERGENCE: at the top
-   precision the two diagonal entries each keep at least prec - 30 relative bits.
+   precision the two diagonal entries and the off-diagonal res01 = tau12^2 each
+   keep at least prec - 30 relative bits (tau0_12 != 0, so res01 is nonzero).
    No per-step radius monotonicity is asserted across the ladder: step count,
    beta, and the internal ellipsoid can change with precision, so a wider ball at
    a higher precision is not a bug, and only the top-precision accuracy is
@@ -614,7 +727,7 @@ TEST_FUNCTION_START(acb_ppav_periods_from_theta2_escalation, state)
     const slong precs[5] = {24, 48, 96, 192, 384};
     const slong toprec = 384;
     int codes[5];
-    slong acc00[5], acc11[5];
+    slong acc00[5], acc11[5], acc01[5];
     slong pi;
     acb_mat_t tau0;
     acb_t truth01;
@@ -627,6 +740,7 @@ TEST_FUNCTION_START(acb_ppav_periods_from_theta2_escalation, state)
         codes[pi] = -1;
         acc00[pi] = 0;
         acc11[pi] = 0;
+        acc01[pi] = 0;
     }
 
     _ppav_test_tau0(tau0);
@@ -657,6 +771,7 @@ TEST_FUNCTION_START(acb_ppav_periods_from_theta2_escalation, state)
         codes[pi] = code;
         acc00[pi] = acb_rel_accuracy_bits(acb_mat_entry(res, 0, 0));
         acc11[pi] = acb_rel_accuracy_bits(acb_mat_entry(res, 1, 1));
+        acc01[pi] = acb_rel_accuracy_bits(acb_mat_entry(res, 0, 1));
 
         /* the fixture is valid, so a certainly-invalid verdict is a bug */
         if (code == 0)
@@ -711,6 +826,12 @@ TEST_FUNCTION_START(acb_ppav_periods_from_theta2_escalation, state)
         _escalation_report(precs, codes, acc00, acc11, nprecs);
         TEST_FUNCTION_FAIL("top prec %wd: res11 rel accuracy %wd < %wd\n",
             toprec, acc11[nprecs - 1], toprec - 30);
+    }
+    if (acc01[nprecs - 1] < toprec - 30)
+    {
+        _escalation_report(precs, codes, acc00, acc11, nprecs);
+        TEST_FUNCTION_FAIL("top prec %wd: res01 rel accuracy %wd < %wd\n",
+            toprec, acc01[nprecs - 1], toprec - 30);
     }
 
     acb_clear(truth01);
