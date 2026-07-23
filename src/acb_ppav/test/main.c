@@ -14,6 +14,7 @@
 #include "test_helpers.h"
 #include "acb_ppav.h"
 
+#include "t-agm_half_plane.c"
 #include "t-agm_max_diff.c"
 #include "t-siegel_coset_nb.c"
 #include "t-theta_naive_ref.c"
@@ -22,6 +23,7 @@
 
 test_struct tests[] =
 {
+    TEST_FUNCTION(acb_ppav_agm_half_plane),
     TEST_FUNCTION(acb_ppav_agm_max_diff),
     TEST_FUNCTION(acb_ppav_g2_siegel_coset_nb),
     TEST_FUNCTION(acb_ppav_theta_naive_ref),
