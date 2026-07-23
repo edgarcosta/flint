@@ -187,6 +187,11 @@ slong acb_ppav_g2_Q_hilbert_isog(acb_ppav_g2_Q_struct ** B,
     const acb_ppav_g2_Q_t A, const nf_elem_t beta, slong q,
     slong hmf_cofactor);
 
+/* Internal: test-support helpers, not part of the public interface. */
+
+int _acb_ppav_periods_overlap_sp4(const acb_mat_t tau1, const acb_mat_t tau2,
+    slong prec);
+
 #ifdef __cplusplus
 }
 #endif
