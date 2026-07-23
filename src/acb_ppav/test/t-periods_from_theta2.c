@@ -388,3 +388,172 @@ next:
 
     TEST_FUNCTION_END(state);
 }
+
+/* Certain-invalid negative test: periods_from_theta2 must return 0 (certainly
+   not a valid theta^2 vector) on decidably invalid input, never 1 and never a
+   hedging 2. Two inputs, both certainly invalid at 300 bits:
+
+   (1) A valid theta^2 vector for the fixture tau0 with one ODD entry forced
+       certainly nonzero. The six odd characteristics k in {5,7,10,11,13,14}
+       have theta_{a,b}(0,tau) identically zero, so th2[5] = 0.3 cannot arise
+       from any tau. The four Borchardt sequences (SEQ) consume only even
+       characteristics, so the assembled tau is still the correct tau0 and only
+       the recheck can catch the planted entry: a code-1 return would mean the
+       recheck skips odd positions (a production gap), a code-2 return would mean
+       it hedges on a decidable mismatch. Both are failures by design.
+
+   (2) The coarse all-ones vector: the odd positions are then certainly nonzero
+       too, so again certainly invalid. */
+TEST_FUNCTION_START(acb_ppav_periods_from_theta2_invalid, state)
+{
+    slong prec = 300;
+    acb_mat_t tau0, res;
+    acb_ptr th2, z;
+    slong k;
+    int code;
+
+    acb_mat_init(tau0, 2, 2);
+    acb_mat_init(res, 2, 2);
+    th2 = _acb_vec_init(16);
+    z = _acb_vec_init(2);
+
+    _ppav_test_tau0(tau0);
+
+    /* (1) valid even entries, one certainly-nonzero odd entry */
+    acb_theta_all(th2, z, tau0, 1, prec);
+    acb_set_d(&th2[5], 0.3);
+    code = acb_ppav_periods_from_theta2(res, th2, 2, prec);
+    if (code != 0)
+        TEST_FUNCTION_FAIL("odd entry th2[5]=0.3: got code %d, expected 0\n", code);
+
+    /* (2) coarsely invalid all-ones */
+    for (k = 0; k < 16; k++)
+        acb_one(&th2[k]);
+    code = acb_ppav_periods_from_theta2(res, th2, 2, prec);
+    if (code != 0)
+        TEST_FUNCTION_FAIL("all-ones th2: got code %d, expected 0\n", code);
+
+    _acb_vec_clear(th2, 16);
+    _acb_vec_clear(z, 2);
+    acb_mat_clear(tau0);
+    acb_mat_clear(res);
+
+    TEST_FUNCTION_END(state);
+}
+
+/* Near-boundary escalation test. acb_siegel_randtest_compact draws reduced tau
+   closer to the reduction boundary than randtest_reduced (bounded imaginary
+   part, exact entries), exercising the half-plane and square-root sign choices
+   that deep-interior draws never reach. For each kept tau we escalate the working
+   precision through {300, 600, 1200}: code 0 is impossible on a valid input, code
+   2 is an honest "insufficient precision" and escalates, and code 1 must be sound
+   (direct entrywise overlaps against tau plus Sp(4,Z)-equivalence, as in the
+   round-trip). An honest 2 at low precision is allowed, but a perpetual 2 (still
+   2 after 1200 bits) is a failure: the contract must reach a certified 1 on these
+   sign-machinery-exercising inputs. */
+TEST_FUNCTION_START(acb_ppav_periods_from_theta2_boundary, state)
+{
+    slong genprec = 300;
+    slong target = 4;          /* completed (eventually code-1) tau required */
+    slong maxdraws = 100;
+    slong nsucc = 0, ndraw = 0;
+    const slong precs[3] = {300, 600, 1200};
+
+    while (nsucc < target && ndraw < maxdraws)
+    {
+        acb_mat_t tau;
+        slong pi;
+        int resolved = 0;
+
+        ndraw++;
+        acb_mat_init(tau, 2, 2);
+        acb_siegel_randtest_compact(tau, state, 1, genprec);
+
+        /* precondition: only -20-reduced tau are in scope. tau is exact, so
+           certifying reducedness once at genprec suffices for higher precs. */
+        if (!acb_siegel_is_reduced(tau, -20, genprec))
+        {
+            acb_mat_clear(tau);
+            continue;
+        }
+
+        for (pi = 0; pi < 3 && !resolved; pi++)
+        {
+            slong prec = precs[pi];
+            acb_mat_t res, tb;
+            acb_ptr th2, z;
+            acb_t t12sq;
+            int code;
+
+            acb_mat_init(res, 2, 2);
+            acb_mat_init(tb, 2, 2);
+            th2 = _acb_vec_init(16);
+            z = _acb_vec_init(2);
+            acb_init(t12sq);
+
+            acb_theta_all(th2, z, tau, 1, prec);
+            code = acb_ppav_periods_from_theta2(res, th2, 2, prec);
+
+            if (code == 0)
+                TEST_FUNCTION_FAIL("draw %wd prec %wd: valid input got code 0\n",
+                    ndraw, prec);
+            if (code == 1)
+            {
+                /* convention: direct entrywise overlaps against the input tau */
+                if (!acb_overlaps(acb_mat_entry(res, 0, 0), acb_mat_entry(tau, 0, 0)))
+                    TEST_FUNCTION_FAIL("draw %wd: res00 does not overlap tau00\n", ndraw);
+                if (!acb_overlaps(acb_mat_entry(res, 1, 1), acb_mat_entry(tau, 1, 1)))
+                    TEST_FUNCTION_FAIL("draw %wd: res11 does not overlap tau11\n", ndraw);
+                acb_sqr(t12sq, acb_mat_entry(tau, 0, 1), prec);
+                if (!acb_overlaps(acb_mat_entry(res, 0, 1), t12sq))
+                    TEST_FUNCTION_FAIL("draw %wd: res01 does not overlap tau01^2\n", ndraw);
+
+                /* equivalence up to Sp(4,Z); pick root of res01 nearer input tau12 */
+                acb_set(acb_mat_entry(tb, 0, 0), acb_mat_entry(res, 0, 0));
+                acb_set(acb_mat_entry(tb, 1, 1), acb_mat_entry(res, 1, 1));
+                acb_sqrt(acb_mat_entry(tb, 0, 1), acb_mat_entry(res, 0, 1), prec);
+                {
+                    acb_t d;
+                    arb_t nd, np;
+                    acb_init(d);
+                    arb_init(nd);
+                    arb_init(np);
+                    acb_sub(d, acb_mat_entry(tb, 0, 1), acb_mat_entry(tau, 0, 1), prec);
+                    acb_abs(nd, d, prec);
+                    acb_add(d, acb_mat_entry(tb, 0, 1), acb_mat_entry(tau, 0, 1), prec);
+                    acb_abs(np, d, prec);
+                    if (arb_gt(nd, np))
+                        acb_neg(acb_mat_entry(tb, 0, 1), acb_mat_entry(tb, 0, 1));
+                    acb_clear(d);
+                    arb_clear(nd);
+                    arb_clear(np);
+                }
+                acb_set(acb_mat_entry(tb, 1, 0), acb_mat_entry(tb, 0, 1));
+                if (!_acb_ppav_periods_overlap_sp4(tb, tau, prec))
+                    TEST_FUNCTION_FAIL("draw %wd: rebuilt tau not Sp(4,Z)-equivalent\n",
+                        ndraw);
+
+                resolved = 1;
+            }
+            /* code == 2: escalate to the next precision */
+
+            acb_clear(t12sq);
+            _acb_vec_clear(th2, 16);
+            _acb_vec_clear(z, 2);
+            acb_mat_clear(res);
+            acb_mat_clear(tb);
+        }
+
+        if (!resolved)
+            TEST_FUNCTION_FAIL("draw %wd: still code 2 after 1200 bits\n", ndraw);
+
+        nsucc++;
+        acb_mat_clear(tau);
+    }
+
+    if (nsucc < target)
+        TEST_FUNCTION_FAIL("only %wd/%wd boundary cases resolved in %wd draws\n",
+            nsucc, target, ndraw);
+
+    TEST_FUNCTION_END(state);
+}
