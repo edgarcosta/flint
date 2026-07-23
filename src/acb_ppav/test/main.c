@@ -11,11 +11,16 @@
 
 /* Include functions *********************************************************/
 
+#include "test_helpers.h"
+#include "acb_ppav.h"
+
+#include "t-siegel_coset_nb.c"
+
 /* Array of test functions ***************************************************/
 
 test_struct tests[] =
 {
-
+    TEST_FUNCTION(acb_ppav_g2_siegel_coset_nb),
 };
 
 /* main function *************************************************************/
