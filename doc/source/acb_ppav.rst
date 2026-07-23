@@ -136,8 +136,92 @@ The AGM method for periods from theta functions in dimensions 1 and 2
 Periods of elliptic curves
 -------------------------------------------------------------------------------
 
-TBC. It would make sense to have periods of elliptic curves in FLINT too, and
-we will probably need them for the gluing procedure.
+.. function:: int acb_ppav_weierstrass(acb_ptr w, const acb_poly_t f, slong g, slong prec)
+
+    Computes the Weierstrass points of the curves with equation `y^2 =
+    f(x)`. It is assumed that *f* has degree exactly 6 when `g=2`, and exactly
+    3 when `g=1`. A return value of 1 means that the individual roots have been
+    successfully separated by :func:`acb_poly_find_roots`. Otherwise the return
+    value is 0 and *w* is left undefined.
+
+    The relevant HDME code is in hdme/igusa/thomae_roots.c.
+
+.. type:: acb_ppav_g1_periods_info_struct
+
+.. type:: acb_ppav_g1_periods_info_t
+
+    These types are intended to store the information from one run of computing
+    periods (typically at low precision) for a given elliptic curve: ordering
+    of Weierstrass points, choice of ordering for the period lattice basis, and
+    reduction matrix.
+
+    An :type:`acb_ppav_g1_periods_info_t` is an array of length one of type
+    :type:`acb_ppav_g1_periods_info_struct` encoding an ellipsoid as described
+    above, alllowing it to be passed by reference.
+
+.. function:: void acb_ppag_g1_periods_info_init(acb_ppav_g1_periods_info_t info, slong nb)
+
+    Initialize *info*.
+
+.. function:: void acb_ppav_g1_periods_info_clear(acb_ppav_g1_periods_info_t info)
+
+    Clears *info*.
+
+.. function:: int acb_ppav_g1_periods_lowprec(acb_t tau, acb_ppav_g1_periods_info_t info, const acb_poly_t f, slong prec)
+
+    Attempts to compute a reduced period *tau* of the elliptic curve `y^2 =
+    f(x)`, where *f* has degree 3, and store the relevant information in the
+    *info* structure. This function is intended for use at low to moderate
+    precisions. The possible return values are:
+
+    - 0: The computation failed at some point and return values are undefined,
+         most likely due to the working precision being to low.
+    - 1: the computed *tau* is certainly correct and *info* contains
+         information about all the valid signs and permutation choices.
+
+    ALGORITHM: we use Cremona, "The complex AGM, periods of elliptic curves
+    over C and complex elliptic logarithms", theorem 19.
+
+    1. Compute Weierstrass points using :func:`acb_ppav_weierstrass`.
+    2. Find an ordering `(e_1,e_2,e_3)` of the Weierstrass points such that the
+       pairs `(e_1 - e_3, e_1 - e_2)` and `(e_2 - e_1, e_2 - e_3)` certainly
+       lie in a common half plane (each). In other words, if `e_1,e_2,e_3` are
+       close to being aligned, we want to make sure that `e_3` is the one in
+       the middle. Set the *w* field of *info* to the ordered triple of
+       Weierstrass points.
+    3. Compute the AGM sequences with good sign choices starting from
+       `(\sqrt{e_1 - e_3}, \sqrt{e_1 - e_2})` and `(\sqrt{e_2 -
+       e_1},\sqrt{e_2 - e_2})` (where the sign choices are good; we can
+       determine those because of step 2). Let `\pi_1` and `\pi_2` be the
+       limits. Then we know that `(\pi_1, \pi_2)` is a basis of the period
+       lattice. Let `\tau = \pi_2/\pi_1`. if the sign of `\mathrm{Im}(\tau)`
+       cannot be decided, output 0 and abort.
+    4. If `\tau` has negative imaginary part, set the *neg* bit of *info* to 1
+       and negate `\tau`, otherwise set the *neg* bit to 0.
+    5. Reduce `\tau` to the fundamental domain using :func:`acb_siegel_reduce`
+       and set the *mat* field of *info* to the corresponding matrix. Set *tau*
+       to the resulting period point and return 1.
+
+.. function:: void acb_ppav_g1_periods_big(acb_mat_t pi, const acb_ppav_g1_periods_info_t info, const acb_poly_t f, slong prec)
+
+    Assuming that *info* was successfully set by an earlier call to
+    :func:`acb_ppav_g1_periods_lowprec` for (a lower-precision approximation
+    of) the exact same curve *f*, this function runs the period computation
+    again using these guidelines. This is intended for use at higher precisions
+    and should not fail on well-formed input. If it does then *tau* is set to
+    an infinity value.
+
+    ALGORITHM:
+
+    1. Compute Weierstrass points using :func:`acb_ppav_weierstrass`, and
+       reorder them according to the field *w* in *info*.
+    2. Compute the AGM sequences, negate `\tau` if necessary, and apply the
+       matrix *mat* as in :func:`acb_ppav_g1_periods_lowprec`.
+    3. Call :func:`acb_siegel_reduce` again on the result (at high precision)
+       to make sure the result lands close to the fundamental domain.
+    4. In addition, keep the original AGM values (before quotienting to get
+       `\tau`) and keep track of the action of `\mathrm{SL}_2(\mathbb{Z})` to
+       get the big period matrix *pi*.
 
 Periods of genus 2 curves
 -------------------------------------------------------------------------------
@@ -148,16 +232,6 @@ Periods of genus 2 curves
     where *f* has the degree 5 or 6 and is squarefree.
 
     ALGORITHM: use Ueberschiebungs as in :func:`acb_theta_g2_covariants`.
-
-.. function:: int acb_ppav_g2_weierstrass(acb_ptr w, const acb_poly_t f, slong prec)
-
-    Computes the Weierstrass points of the curves with equation `y^2 =
-    f(x)`. It is assumed that *f* has degree exactly 6. A return value of 1
-    means that the individual roots have been successfully separated by
-    :func:`acb_poly_find_roots`. Otherwise the return value is 0 and *w* is
-    left undefined.
-
-    The relevant HDME code is in hdme/igusa/thomae_roots.c.
 
 .. function:: void acb_ppav_g2_rosenhain(acb_ptr ros, acb_srcptr w, slong perm, slong prec)
 
@@ -317,7 +391,7 @@ Periods of genus 2 curves
          information about all the valid signs and permutation choices.
 
     ALGORITHM:
-    1. Compute Weierstrass points using :func:`acb_ppav_g2_weierstrass`. If
+    1. Compute Weierstrass points using :func:`acb_ppav_weierstrass`. If
        successful, store them in the *w* field of *info*, otherwise abort. Also
        set the *use_j* field in *info* and, if *use_j* is true, the field *j*.
     2. Loop over permutations, and compute Rosenhain invariants using
@@ -355,13 +429,13 @@ Periods of genus 2 curves
 
     Assuming that *info* was successfully set by an earlier call to
     :func:`acb_ppav_g2_periods_lowprec` for (a lower-precision approximation
-    of) the exact same curve *f*, run the period computation again using these
-    guidelines. This function is intended for use at higher precisions. The
-    should not fail on well-formed input. If it does then *tau* is set to an
-    infinity value.
+    of) the exact same curve *f*, this function runs the period computation
+    again using these guidelines. This function is intended for use at higher
+    precisions and should not fail on well-formed input. If it does then *tau*
+    is set to an infinity value.
 
     ALGORITHM:
-    1. Compute Weierstrass points using :func:`acb_ppav_g2_weierstrass`, and
+    1. Compute Weierstrass points using :func:`acb_ppav_weierstrass`, and
        match them with the Weierstrass points stored in *info*. Overlaps should
        be 1-to-1; otherwise we abort and return 0. Reorder the Weierstrass
        points to match the ordering from the *info* structure.
@@ -521,15 +595,15 @@ Principally polarized abelian surfaces over Q
     increasing precisions until it succeeds to fill in the periods information,
     and set *prec* to the precision where this computation succeeded.
 
-.. function:: void acb_ppav_g2_Q_set_split(acb_ppav_g2_Q_t A, const fmpz_poly_t e1, const fmpz_poly_t e2
+.. function:: void acb_ppav_g2_Q_set_split(acb_ppav_g2_Q_t A, const fmpz_poly_t e1, const fmpz_poly_t e2)
 
     Sets *A* to the product `E_1\times E_2`, where `E_i` is the elliptic curves
     `y^2 = e_i(x)` for `i=1,2`. The polynomials *e1* and *e2* should be in
     short Weierstrass form `x^3 + ax + b` with nonzero discriminant.
 
     ALGORITHM: Compute the modular invariants from the Weierstrass
-    coefficients; convert *e1* and *e2* to :type:`ca_poly_t`; maybe call the
-    elliptic curve period functions?
+    coefficients; convert *e1* and *e2* to :type:`ca_poly_t`; call
+    :func:`acb_ppav_g1_periods_lowprec` to set the *info1* and *info2* fields.
 
 .. function:: void acb_ppav_g2_Q_set_weil(acb_ppav_g2_Q_t A, const nf_elem_t a, const nf_elem_t b)
 
@@ -603,7 +677,8 @@ Principally polarized abelian surfaces over Q
     Computes a small period matrix of *A* that lies very close to the Siegel
     fundamental domain. If *A* is a Jacobian, this calls
     :func:`acb_ppav_g2_periods_highprec` using the precomputed information;
-    otherwise, we compute elliptic curve periods (functions TBD).
+    otherwise, we compute elliptic curve periods using
+    :func:`acb_ppav_g1_periods_big`.
 
 .. function:: void acb_ppav_g2_Q_periods_big(acb_mat_t pi, const acb_ppav_g2_Q_t A, slong prec)
 
@@ -612,7 +687,8 @@ Principally polarized abelian surfaces over Q
     period matrix lies in or very close to the Siegel fundamental domain.
 
     In the genus 2 case, this will mostly be a repetition of
-    :func:`acb_ppav_g2_periods_big_ca`. Maybe keep just one of them?
+    :func:`acb_ppav_g2_periods_big_ca`. Maybe keep just one of them? In genus
+    1, this just calls :func:`acb_ppav_g1_periods_big`.
 
 .. function:: void acb_ppav_g2_Q_periods_rm(acb_ptr t, const acb_ppav_g2_Q_t A, slong prec)
 

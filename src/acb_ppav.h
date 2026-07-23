@@ -18,10 +18,11 @@
 #define ACB_PPAV_INLINE static inline
 #endif
 
+#include "ulong_extras.h"
 #include "fmpz_types.h"
 #include "fmpq_types.h"
 #include "acb_types.h"
-#include "nf_types.h"
+#include "nf_elem.h"
 #include "ca_types.h"
 
 #ifdef __cplusplus
@@ -42,11 +43,31 @@ int acb_ppav_periods_from_theta2(acb_mat_t res, acb_srcptr th,
 
 /* Periods of elliptic curves */
 
+int acb_ppav_weierstrass(acb_ptr w, const acb_poly_t f, slong g, slong prec);
+
+typedef struct
+{
+    acb_ptr w;
+    slong perm;
+    int neg;
+    fmpz_mat_struct * mat;
+}
+acb_ppav_g1_periods_info_struct;
+
+typedef acb_ppav_g1_periods_info_struct acb_ppav_g1_periods_info_t[1];
+
+void acb_ppav_g1_periods_info_init(acb_ppav_g1_periods_info_t info);
+void acb_ppav_g1_periods_info_clear(acb_ppav_g1_periods_info_t info);
+
+int acb_ppav_g1_periods_lowprec(acb_t tau, acb_ppav_g1_periods_info_t info,
+    const acb_poly_t f, slong prec);
+void acb_ppav_g1_periods_big(acb_mat_t pi, const acb_ppav_g1_periods_info_t info,
+    const acb_poly_t f, slong prec);
+
 /* Periods of genus 2 curves */
 
 void acb_ppav_g2_igusa(ca_vec_t j, const ca_poly_t f);
 
-int acb_ppav_g2_weierstrass(acb_ptr w, const acb_poly_t f, slong prec);
 void acb_ppav_g2_rosenhain(acb_ptr ros, acb_srcptr w, slong perm, slong prec);
 slong acb_ppav_g2_theta4(acb_ptr th4, acb_srcptr ros, slong prec);
 void acb_ppav_g2_theta2(acb_ptr th2, acb_srcptr th4, acb_srcptr ros,
@@ -77,7 +98,7 @@ void acb_ppav_g2_periods_info_clear(acb_ppav_g2_periods_info_t info);
 
 int acb_ppav_g2_periods_lowprec(acb_mat_t tau, acb_ppav_g2_periods_info_t info,
     const acb_poly_t f, const ca_vec_struct * j, slong prec);
-void acb_ppav_g2_periods_highprec(acb_mat_t tau, const acb_ppav_g2_periods_t info,
+void acb_ppav_g2_periods_highprec(acb_mat_t tau, const acb_ppav_g2_periods_info_t info,
     const acb_poly_t f, slong prec);
 
 void acb_ppav_g2_periods_acb(acb_mat_t tau, acb_poly_t f, slong prec);
@@ -104,13 +125,12 @@ typedef struct
     fmpz_poly_struct f;
     ca_poly_struct e1, e2;
     fmpq_mat_struct rm;
+    acb_ppav_g1_periods_info_struct info1, info2;
     acb_ppav_g2_periods_info_struct info;
 }
 acb_ppav_g2_Q_struct;
 
 typedef acb_ppav_g2_Q_struct acb_ppav_g2_Q_t[1];
-
-#define acb_ppav_g2_Q_modular_invariants(A) (&(A)->m)
 
 void acb_ppav_g2_Q_init(acb_ppav_g2_Q_t A);
 void acb_ppav_g2_Q_clear(acb_ppav_g2_Q_t A);
@@ -128,7 +148,7 @@ int acb_ppav_g2_Q_is_weil(const acb_ppav_g2_Q_t A);
 slong acb_ppav_g2_Q_has_rm(const acb_ppav_g2_Q_t A);
 
 void acb_ppav_g2_Q_modular_invariants(fmpz_vec_t m, const acb_ppav_g2_Q_t A);
-void acb_ppav_g2_Q_igusa_invariants(fmpq_vec_t j, const acb_ppav_g2_Q_t A);
+void acb_ppav_g2_Q_igusa_invariants(fmpq * j, const acb_ppav_g2_Q_t A);
 void acb_ppav_g2_Q_curve(fmpz_poly_t f, const acb_ppav_g2_Q_t A);
 void acb_ppav_g2_Q_elliptic_factor(ca_poly_t e, const acb_ppav_g2_Q_t A, slong k);
 
