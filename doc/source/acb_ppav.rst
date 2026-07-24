@@ -15,7 +15,7 @@ The AGM method for periods from theta functions in dimensions 1 and 2
 
 .. function:: int acb_ppav_agm_half_plane(arf_t beta, acb_srcptr a, const arf_t eps, slong g, slong prec)
 
-    Given a tuple *a* of `2^g` complex numbers, this function attemps to
+    Given a tuple *a* of `2^g` complex numbers, this function attempts to
     compute an angle `\beta` such that `z = e^{-2\pi i\beta} a_j` has real part
     at least *eps* times `|z|` for each `0\leq j\leq 2^g - 1`. The real number
     *eps* should be strictly positive.
@@ -250,7 +250,7 @@ Periods of genus 2 curves
 
     Given a tuple of Rosenhain invariants, computes the associated values of
     `\theta_{a,b}^4(0,\tau)` for all characteristics `(a,b)` up to a common
-    scalar factors using Thomae's formulas. (Only the even characteristics are
+    scalar factor using Thomae's formulas. (Only the even characteristics are
     relevant as odd theta constants are identically zero.)
 
     The return value is a 16-bit integer indicating, for each characteristic,
@@ -300,7 +300,7 @@ Periods of genus 2 curves
     than 1. There will be only finitely many of those. Then check whether the
     rest of the matrices in *tau_list* overlap with one of the images of
     `\tau_0`. If not, return 0. If yes, say that `\tau_i` overlaps with
-    `\gamma_i\tau_0`. Then we let `\tau` be the reunion (in the sense of
+    `\gamma_i\tau_0`. Then we let `\tau` be the union (in the sense of
     interval arithmetic) of the `\gamma_i^{-1}\tau_i` for each `i`.
 
     There is no comparable code in HDME (and there should have been).
@@ -359,10 +359,10 @@ Periods of genus 2 curves
     :func:`acb_ppav_g2_periods_gather` if any.
 
     An :type:`acb_ppav_g2_periods_info_t` is an array of length one of type
-    :type:`acb_ppav_g2_periods_info_struct` encoding an ellipsoid as described
-    above, alllowing it to be passed by reference.
+    :type:`acb_ppav_g2_periods_info_struct` encoding data attached to a
+    genus-2 period computation, allowing it to be passed by reference.
 
-.. function:: void acb_ppag_g2_periods_info_init(acb_ppav_g2_periods_info_t info, slong nb)
+.. function:: void acb_ppav_g2_periods_info_init(acb_ppav_g2_periods_info_t info)
 
     Initialize *info*.
 
@@ -386,7 +386,7 @@ Periods of genus 2 curves
     values are:
 
     - 0: The computation failed at some point and return values are undefined,
-         most likely due to the working precision being to low.
+         most likely due to the working precision being too low.
     - 1: the computed matrix *tau* is certainly correct and *info* contains
          information about all the valid signs and permutation choices.
 
@@ -451,7 +451,7 @@ Periods of genus 2 curves
        the return code was 0. There will be at least 1 value of *tau* left.
     4. If the number of period matrices we computed is at least 2, use the
        symplectic transformations stored in *info* as in step 7 of
-       :func:`acb_ppav_periods_lowprec`. If the results overlap, set *tau* to
+       :func:`acb_ppav_g2_periods_lowprec`. If the results overlap, set *tau* to
        their union and return 1, otherwise continue.
     5. This is the case where we had several valid sign choices at low
        precision, but they somehow don't agree at high precision anymore. This
@@ -468,10 +468,10 @@ Periods of genus 2 curves
     Computes the periods of the curve `y^2 = f(x)`.
 
     ALGORITHM: pick a low starting precision, like 100 bits. Call
-   :func:`acb_ppav_g2_periods_lowprec` where *j* is NULL. If 0 is returned,
-   increase the precision (up to *prec*) until it works. Once 1 is returned,
-   call :func:`acb_ppav_g2_periods_highprec`. If the result is 0, set *tau* to
-   an infinite value.
+    :func:`acb_ppav_g2_periods_lowprec` where *j* is NULL. If 0 is returned,
+    increase the precision (up to *prec*) until it works. Once 1 is returned,
+    call :func:`acb_ppav_g2_periods_highprec`. If the result is 0, set *tau* to
+    an infinite value.
 
 .. function:: void acb_ppav_g2_periods_ca_j(acb_mat_t tau, acb_poly_t f, const ca_vec_t j, slong prec)
 
@@ -496,7 +496,7 @@ Big period matrices and periods in Hilbert space
 
     Compute the automorphism group of the curve `y^2 = f(x)`. There are only
     finitely many possibilities, each corresponding to a possible automorphism
-    groups (TBC).
+    group (TBC).
 
     ALGORITHM: Cardona--Quer, "Field of moduli and field of definition for
     curves of genus 2". The invariants `R`, etc. should be computed by
@@ -505,7 +505,7 @@ Big period matrices and periods in Hilbert space
 .. function:: void acb_ppav_g2_isom(acb_mat_t r, const acb_poly_t f1, const acb_poly_t f2, slong aut, slong prec)
 
     Given two degree 6 polynomials `f_1` and `f_2` such that the genus 2 curves
-    `y^2 = f_1(x)` and `y^2 = f_2(x)` are isomorphic, compute an automorphism
+    `y^2 = f_1(x)` and `y^2 = f_2(x)` are isomorphic, compute an isomorphism
     between them in the form of a matrix `r\in \mathrm{GL}_2(\mathbb{C})`.
 
     ALGORITHM: Follow the hyperellisom function in Pari/GP, which is itself
@@ -520,7 +520,7 @@ Big period matrices and periods in Hilbert space
     Given a squarefree polynomial `f` of degree 5 or 6, compute a big period
     matrix `\Pi` of the genus 2 curve `y^2 = f(x)`, with respect to the
     canonical basis of differential forms `(x dx/y, dx/y)` and some homology
-    basis.This matrix will be `2\times 4`, of the form `(r\ r\tau)` where
+    basis. This matrix will be `2\times 4`, of the form `(r\ r\tau)` where
     `\tau` is a small period matrix very close to the Siegel fundamental
     domain.
 
@@ -574,8 +574,8 @@ Principally polarized abelian surfaces over Q
     to modular invariants, curve equations, real endomorphisms, and complex periods.
 
     An :type:`acb_ppav_g2_Q_t` is an array of length one of type
-    :type:`acb_ppav_g2_Q_struct` encoding an ellipsoid as described above,
-    alllowing it to be passed by reference.
+    :type:`acb_ppav_g2_Q_struct` encoding a PPAV over Q,
+    allowing it to be passed by reference.
 
 .. function:: void acb_ppav_g2_Q_init(acb_ppav_g2_Q_t A)
 
@@ -612,7 +612,7 @@ Principally polarized abelian surfaces over Q
     discriminant must be nonzero.
 
     ALGORITHM: Compute the polynomial `x^3 + ax + b` and its conjugate as
-    :type:`ca_poly_t`'s, then proceed as in :func:`acb_ppav_g2_Q_set_ell`. We
+    :type:`ca_poly_t`'s, then proceed as in :func:`acb_ppav_g2_Q_set_split`. We
     could check that it isn't actually isomorphic to a product of elliptic
     curves over `\mathbb{Q}` as well. This should be easily seen from the
     invariants.
@@ -627,7 +627,7 @@ Principally polarized abelian surfaces over Q
     `\sqrt{\Delta}` on the canonical basis of differential forms `(x dx/y,
     dx/y)` on the curve.
 
-    ALGORITHM: proceed as in :func:`acb_ppav_g2_Q_set_curve` and fill in the
+    ALGORITHM: proceed as in :func:`acb_ppav_g2_Q_set_jac` and fill in the
     *rm* field.
 
 .. function:: int acb_ppav_g2_Q_is_jac(const acb_ppav_g2_Q_t A)
@@ -650,12 +650,12 @@ Principally polarized abelian surfaces over Q
     of integers in a real quadratic field. In that case the return value is the
     discriminant of the RM field. Otherwise returns 0.
 
-.. function:: void acb_ppav_g2_Q_modular_invariants(const acb_ppav_g2_Q_t A)
+.. function:: void acb_ppav_g2_Q_modular_invariants(fmpz_vec_t m, const acb_ppav_g2_Q_t A)
 
     Sets *m* to the modular invariants of *A* (a vector of length 4), as
     defined in our previous isogeny classes paper.
 
-.. function:: void acb_ppav_g2_Q_igusa_invariants(const acb_ppav_g2_Q_t A)
+.. function:: void acb_ppav_g2_Q_igusa_invariants(fmpq * j, const acb_ppav_g2_Q_t A)
 
     Sets *j* to the Igusa invariants of *A* (a vector of length 3). This
     function throws if *A* is not a Jacobian.
@@ -698,17 +698,17 @@ Principally polarized abelian surfaces over Q
 Hecke operators
 -------------------------------------------------------------------------------
 
-.. function:: acb_ppav_g2_siegel_coset_nb(slong ell)
+.. function:: slong acb_ppav_g2_siegel_coset_nb(slong ell)
 
     Returns the number of cosets for the Hecke operator `T(\ell)` for PPAV's of
     dimension 2, which is `(\ell^4 - 1)/(\ell - 1)`.
 
-.. function:: acb_ppav_g2_siegel_2step_coset_nb(slong ell)
+.. function:: slong acb_ppav_g2_siegel_2step_coset_nb(slong ell)
 
     Returns the number of cosets for the Hecke operator `T_1(\ell^2)` for
     PPAV's of dimension 2, which is `\ell (\ell^4 - 1)/(\ell - 1)`.
 
-.. function:: acb_ppav_g2_hilbert_coset_nb(const nf_elem_t beta, slong q)
+.. function:: slong acb_ppav_g2_hilbert_coset_nb(const nf_elem_t beta, slong q)
 
     In this function, `\beta` denotes a totally positive algebraic integer in a
     real quadratic field `K` such that the ideal `(\beta)` decomposes as
@@ -769,7 +769,7 @@ Isogenous abelian varieties
 
     Sets **B* to the list of all PPAV's of genus 2 over Q that are 1-step
     `\ell`-isogenous to *A*, and return the number of such abelian
-    varieties. The return value is the number of such abelian varieties. The
+    varieties. The
     vector **B* will have to be freed by the user.
 
     ALGORITHM: this is as in our previous paper.
@@ -809,7 +809,7 @@ Isogenous abelian varieties
     and Hilbert cases, but I'm not sure how exactly at this point. Maybe
     writing the same code three times isn't horrible?
 
-.. function:: slong acb_ppav_g2_Q_siegel_2step_isog(acb_ppav_g2_Q_struct ** B, const acb_ppav_g2_Q_t A, slong ell);
+.. function:: slong acb_ppav_g2_Q_siegel_2step_isog(acb_ppav_g2_Q_struct ** B, const acb_ppav_g2_Q_t A, slong ell)
 
     Same as :func:`acb_ppav_g2_Q_siegel_isog` but in the 2-step case.
 
