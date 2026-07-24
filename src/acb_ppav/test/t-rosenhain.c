@@ -1,0 +1,21 @@
+/*
+    Copyright (C) 2026 Edgar Costa
+
+    This file is part of FLINT.
+
+    FLINT is free software: you can redistribute it and/or modify it under
+    the terms of the GNU Lesser General Public License (LGPL) as published
+    by the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.  See <https://www.gnu.org/licenses/>.
+*/
+
+#include "test_helpers.h"
+#include "arb.h"
+#include "acb.h"
+#include "acb_ppav.h"
+
+TEST_FUNCTION_START(acb_ppav_g2_rosenhain, state)
+{
+    /* scaffolding, filled by the rosenhain PR */
+    TEST_FUNCTION_END(state);
+}

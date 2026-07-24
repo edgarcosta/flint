@@ -19,8 +19,13 @@
 #include "t-agm_max_diff.c"
 #include "t-periods_from_theta2.c"
 #include "t-periods_overlap_sp4.c"
+#include "t-rosenhain.c"
 #include "t-siegel_coset_nb.c"
+#include "t-theta2.c"
+#include "t-theta4.c"
 #include "t-theta_naive_ref.c"
+#include "t-thomae_chain.c"
+#include "t-weierstrass.c"
 
 /* Array of test functions ***************************************************/
 
@@ -36,8 +41,13 @@ test_struct tests[] =
     TEST_FUNCTION(acb_ppav_periods_from_theta2_boundary),
     TEST_FUNCTION(acb_ppav_periods_from_theta2_escalation),
     TEST_FUNCTION(acb_ppav_periods_overlap_sp4),
+    TEST_FUNCTION(acb_ppav_g2_rosenhain),
     TEST_FUNCTION(acb_ppav_g2_siegel_coset_nb),
+    TEST_FUNCTION(acb_ppav_g2_theta2),
+    TEST_FUNCTION(acb_ppav_g2_theta4),
     TEST_FUNCTION(acb_ppav_theta_naive_ref),
+    TEST_FUNCTION(acb_ppav_thomae_chain),
+    TEST_FUNCTION(acb_ppav_weierstrass),
 };
 
 /* main function *************************************************************/
